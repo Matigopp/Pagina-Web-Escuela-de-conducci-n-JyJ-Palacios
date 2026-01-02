@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escuela de Conductores J&J Palacios</title>
+    <style>
+        /* Variables de colores basadas en tu logo */
+        :root {
+            --brand-red: #f53333; /* Rojo del logo */
+            --brand-black: #1a1a1a;
+            --brand-white: #ffffff;
+            --brand-gray: #f4f4f4;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--brand-black);
+            background-color: var(--brand-white);
+        }
+
+        /* HEADER */
+        header {
+            background-color: var(--brand-red);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .logo-img-placeholder {
+            width: 50px;
+            height: 50px;
+            background-color: black;
+            border-radius: 50%;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: 500;
+        }
+
+        .btn-login {
+            background-color: var(--brand-black);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid white;
+            transition: 0.3s;
+        }
+
+        .btn-login:hover {
+            background-color: white;
+            color: var(--brand-red);
+        }
+
+        /* HERO SECTION */
+        .hero {
+            background-color: var(--brand-black); /* Aquí iría una foto de fondo */
+            color: white;
+            text-align: center;
+            padding: 100px 20px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        
+        .hero span {
+            color: var(--brand-red);
+        }
+
+        /* SECCIONES GENERALES */
+        .section-container {
+            padding: 60px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--brand-red);
+            font-size: 2.2rem;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+        }
+
+        /* SOBRE NOSOTROS */
+        .about-box {
+            background-color: var(--brand-gray);
+            padding: 40px;
+            border-left: 5px solid var(--brand-red);
+            border-radius: 8px;
+        }
+
+        /* CURSOS */
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .course-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            padding: 20px;
+            transition: transform 0.3s;
+        }
+
+        .course-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .icon-car {
+            font-size: 3rem;
+            color: var(--brand-black);
+            margin-bottom: 15px;
+        }
+
+        /* ZONA ALUMNOS (AULA VIRTUAL) */
+        .student-zone {
+            background-color: var(--brand-red);
+            color: white;
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .student-zone h2 {
+            color: white;
+            border-bottom: 2px solid white;
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        .login-box {
+            background: white;
+            color: black;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background-color: var(--brand-red);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        /* FOOTER & CONTACTO */
+        footer {
+            background-color: var(--brand-black);
+            color: white;
+            padding: 50px 20px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-col h3 {
+            color: var(--brand-red);
+            border-bottom: 1px solid gray;
+            padding-bottom: 10px;
+        }
+
+        .social-links a {
+            color: white;
+            font-size: 1.2rem;
+            margin-right: 15px;
+            text-decoration: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-img-placeholder">J&J</div> 
+            J&J PALACIOS
+        </div>
+        <nav>
+            <a href="#inicio">Inicio</a>
+            <a href="#nosotros">Nosotros</a>
+            <a href="#cursos">Cursos</a>
+            <a href="#contacto">Contacto</a>
+        </nav>
+        <a href="#aula-virtual" class="btn-login">🔒 Acceso Alumnos</a>
+    </header>
+
+    <section id="inicio" class="hero">
+        <h1>Aprende a conducir <br>con <span>Confianza</span></h1>
+        <p>Tu licencia de conducir comienza en Escuela J&J Palacios.</p>
+    </section>
+
+    <section id="nosotros" class="section-container">
+        <h2>Sobre J&J Palacios</h2>
+        <div class="about-box">
+            <p><strong>[Espacio para redacción]</strong></p>
+            <p>Somos una Escuela de Conductores comprometida con la seguridad vial y la formación integral de nuevos conductores. Aquí explicaremos nuestra trayectoria, misión y por qué elegirnos.</p>
+        </div>
+    </section>
+
+    <section id="cursos" class="section-container">
+        <h2>Nuestros Cursos</h2>
+        <div class="courses-grid">
+            <div class="course-card">
+                <div class="icon-car">🚗</div>
+                <h3>Licencia Clase B</h3>
+                <p>Curso completo para vehículos particulares. Incluye teoría y práctica.</p>
+                <button class="btn-primary" style="background-color: #333;">Ver Detalles</button>
+            </div>
+            <div class="course-card">
+                <div class="icon-car">🏍️</div>
+                <h3>Licencia Clase C</h3>
+                <p>Especialización para motocicletas con instructores expertos.</p>
+                <button class="btn-primary" style="background-color: #333;">Ver Detalles</button>
+            </div>
+             <div class="course-card">
+                <div class="icon-car">🚛</div>
+                <h3>Licencia Profesional</h3>
+                <p>Avanza en tu carrera con nuestros cursos profesionales.</p>
+                <button class="btn-primary" style="background-color: #333;">Ver Detalles</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="aula-virtual" class="student-zone">
+        <h2>Aula Virtual Alumnos</h2>
+        <p>Accede a todo el material teórico, exámenes de prueba y videos educativos.</p>
+        <br>
+        <div class="login-box">
+            <h3>Ingreso al Portal</h3>
+            <p style="font-size: 0.9rem; color: #666;">Ingresa con tu RUT y contraseña asignada</p>
+            <input type="text" placeholder="Usuario / RUT" style="width: 90%; padding: 10px; margin: 10px 0;">
+            <input type="password" placeholder="Contraseña" style="width: 90%; padding: 10px; margin: 10px 0;">
+            <button class="btn-primary">Ingresar al Curso Teórico</button>
+        </div>
+    </section>
+
+    <footer id="contacto">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h3>Contáctanos</h3>
+                <p>📍 Dirección de la Escuela, Ciudad</p>
+                <p>📞 +56 9 1234 5678</p>
+                <p>✉️ contacto@jjpalacios.cl</p>
+            </div>
+            <div class="footer-col">
+                <h3>Horarios de Atención</h3>
+                <p>Lunes a Viernes: 09:00 - 19:00</p>
+                <p>Sábados: 10:00 - 14:00</p>
+            </div>
+            <div class="footer-col">
+                <h3>Síguenos</h3>
+                <div class="social-links">
+                    <a href="#">Facebook</a>
+                    <a href="#">Instagram</a>
+                    <a href="#">WhatsApp</a>
+                </div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 40px; border-top: 1px solid #333; padding-top: 20px; font-size: 0.8rem;">
+            © 2024 Escuela de Conductores J&J Palacios. Todos los derechos reservados.
+        </div>
+    </footer>
+
+</body>
+</html>
