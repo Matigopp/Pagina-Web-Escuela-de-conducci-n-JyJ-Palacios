@@ -74,24 +74,24 @@
             color: var(--brand-red);
         }
 
-        /* HERO SECTION */
         .hero {
-            background-color: var(--brand-black); /* Aquí iría una foto de fondo */
+            position: relative;
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://cdn-blog.superprof.com/blog_cl/wp-content/uploads/2022/02/aprender-a-manejar.jpg.webp') center/cover no-repeat;
             color: white;
             text-align: center;
-            padding: 100px 20px;
+            padding: 120px 20px;
         }
 
         .hero h1 {
             font-size: 3rem;
             margin-bottom: 10px;
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
         }
         
         .hero span {
             color: var(--brand-red);
         }
 
-        /* SECCIONES GENERALES */
         .section-container {
             padding: 60px 20px;
             max-width: 1200px;
@@ -241,19 +241,45 @@
         <h2>Nuestros Cursos</h2>
         <div class="courses-grid">
             <div class="course-card">
-                <div class="icon-car">🚗</div>
+                <div class="icon-car">🚗
+                    <!-- Ícono simple de automóvil creado con SVG para mantener la temática de conducción -->
+                    <svg width="60" height="32" viewBox="0 0 60 32" aria-hidden="true" focusable="false">
+                        <rect x="8" y="12" width="44" height="12" rx="4" fill="#1a1a1a"></rect>
+                        <rect x="18" y="8" width="24" height="6" rx="2" fill="#f53333"></rect>
+                        <circle cx="20" cy="26" r="4" fill="#666"></circle>
+                        <circle cx="40" cy="26" r="4" fill="#666"></circle>
+                    </svg>
+                </div>
                 <h3>Licencia Clase B</h3>
                 <p>Curso completo para vehículos particulares. Incluye teoría y práctica.</p>
                 <button class="btn-primary" style="background-color: #333;">Ver Detalles</button>
             </div>
             <div class="course-card">
-                <div class="icon-car">🏍️</div>
+                <div class="icon-car">🏍️
+                    <!-- Ícono estilizado de motocicleta con SVG para resaltar la categoría -->
+                    <svg width="60" height="32" viewBox="0 0 60 32" aria-hidden="true" focusable="false">
+                        <circle cx="18" cy="22" r="5" fill="#666"></circle>
+                        <circle cx="42" cy="22" r="5" fill="#666"></circle>
+                        <rect x="22" y="14" width="14" height="4" rx="2" fill="#1a1a1a"></rect>
+                        <rect x="28" y="10" width="8" height="4" rx="1" fill="#f53333"></rect>
+                        <rect x="16" y="16" width="6" height="3" rx="1" fill="#1a1a1a"></rect>
+                    </svg>
+                </div>
                 <h3>Licencia Clase C</h3>
                 <p>Especialización para motocicletas con instructores expertos.</p>
                 <button class="btn-primary" style="background-color: #333;">Ver Detalles</button>
             </div>
              <div class="course-card">
-                <div class="icon-car">🚛</div>
+                <div class="icon-car">🚛
+                    <!-- Ícono de camión en SVG para los cursos profesionales -->
+                    <svg width="60" height="32" viewBox="0 0 60 32" aria-hidden="true" focusable="false">
+                        <rect x="8" y="12" width="28" height="10" rx="2" fill="#1a1a1a"></rect>
+                        <rect x="36" y="14" width="14" height="8" rx="2" fill="#f53333"></rect>
+                        <circle cx="18" cy="24" r="4" fill="#666"></circle>
+                        <circle cx="38" cy="24" r="4" fill="#666"></circle>
+                        <circle cx="48" cy="24" r="4" fill="#666"></circle>
+                    </svg>
+                </div>
                 <h3>Licencia Profesional</h3>
                 <p>Avanza en tu carrera con nuestros cursos profesionales.</p>
                 <button class="btn-primary" style="background-color: #333;">Ver Detalles</button>
