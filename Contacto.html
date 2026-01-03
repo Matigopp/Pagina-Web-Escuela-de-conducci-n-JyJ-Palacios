@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Contenidos - J&J Palacios</title>
+    <title>Contacto - J&J Palacios</title>
     <style>
         :root {
             --brand-red: #f53333;
@@ -85,7 +85,7 @@
 
         .hero {
             position: relative;
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.pexels.com/photos/2449452/pexels-photo-2449452.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1') center/cover no-repeat;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.pexels.com/photos/1034662/pexels-photo-1034662.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1') center/cover no-repeat;
             color: white;
             text-align: center;
             padding: 110px 20px 120px;
@@ -99,7 +99,7 @@
 
         .hero p {
             font-size: 1.1rem;
-            max-width: 750px;
+            max-width: 760px;
             margin: 0 auto;
         }
 
@@ -117,59 +117,64 @@
             text-transform: uppercase;
         }
 
-        .content-grid {
+        .contact-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 24px;
         }
 
-        .content-card {
-            background-color: white;
+        .contact-card {
+            background: white;
+            border: 1px solid #e5e5e5;
             border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 8px 18px rgba(0,0,0,0.12);
-            border: 1px solid #e9e9e9;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            padding: 24px;
+            box-shadow: 0 10px 18px rgba(0,0,0,0.12);
         }
 
-        .content-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 14px 22px rgba(0,0,0,0.15);
+        form label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
         }
 
-        .card-image {
-            height: 160px;
-            background-size: cover;
-            background-position: center;
+        form input, form textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 14px;
+            border-radius: 6px;
+            border: 1px solid #d6d6d6;
+            font-size: 1rem;
+            background-color: var(--brand-gray);
         }
 
-        .card-body {
-            padding: 20px;
-        }
-
-        .card-body h3 {
-            margin: 0 0 10px 0;
-            color: var(--brand-black);
-        }
-
-        .card-body p {
-            margin: 0 0 15px 0;
-            line-height: 1.5;
+        form textarea {
+            resize: vertical;
+            min-height: 120px;
         }
 
         .btn-primary {
             display: inline-block;
             background-color: var(--brand-red);
             color: white;
-            padding: 10px 18px;
+            padding: 12px 20px;
             text-decoration: none;
             border-radius: 6px;
             font-weight: 600;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            border: none;
+            cursor: pointer;
         }
 
-        .btn-primary:hover {
-            background-color: #d42b2b;
+        .contact-details p {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        .map-frame {
+            width: 100%;
+            height: 260px;
+            border: 0;
+            border-radius: 8px;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.15);
         }
 
         footer {
@@ -192,46 +197,46 @@
             <a href="CursosDisponibles.html">Cursos</a>
             <a href="Contacto.html">Contacto</a>
         </nav>
-        <a href="CursosDisponibles.html" class="btn-login">Volver a cursos</a>
+        <a href="ListaDeContenidos.html" class="btn-login">Acceso alumnos</a>
     </header>
 
     <section class="hero">
-        <h1>Contenido del aula virtual</h1>
-        <p>Organiza tu avance con unidades claras, materiales complementarios y cuestionarios de repaso. Cada bloque está pensado para que estudies a tu ritmo sin perder la guía.</p>
+        <h1>Contacto y soporte</h1>
+        <p>Escríbenos para resolver dudas sobre inscripciones, horarios o modalidades de práctica. Responderemos a la brevedad.</p>
     </section>
 
     <section class="section-container">
-        <h2>Selecciona un bloque</h2>
-        <div class="content-grid">
-            <div class="content-card">
-                <div class="card-image" style="background-image: url('https://images.pexels.com/photos/8101867/pexels-photo-8101867.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');"></div>
-                <div class="card-body">
-                    <h3>Unidades</h3>
-                    <p>Lecciones paso a paso con ejemplos de conducción urbana y reglamentación vigente.</p>
-                    <a class="btn-primary" href="CursosDisponibles.html">Ver unidades</a>
+        <h2>Hablemos</h2>
+        <div class="contact-grid">
+            <div class="contact-card">
+                <div class="contact-details">
+                    <p><strong>Teléfono:</strong> +56 9 1234 5678</p>
+                    <p><strong>Correo:</strong> contacto@jjpalacios.cl</p>
+                    <p><strong>Dirección:</strong> Calle Principal 1234, Ciudad</p>
+                    <p><strong>Horarios:</strong> Lunes a Viernes 09:00 - 19:00, Sábados 10:00 - 14:00</p>
                 </div>
+                <iframe class="map-frame" src="https://www.openstreetmap.org/export/embed.html?bbox=-70.664%2C-33.457%2C-70.654%2C-33.447&amp;layer=mapnik" title="Ubicación de la escuela"></iframe>
             </div>
-            <div class="content-card">
-                <div class="card-image" style="background-image: url('https://images.pexels.com/photos/4924367/pexels-photo-4924367.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');"></div>
-                <div class="card-body">
-                    <h3>Material complementario</h3>
-                    <p>Guías descargables, listas de verificación y videos explicativos para reforzar cada clase.</p>
-                    <a class="btn-primary" href="CursosDisponibles.html">Ver materiales</a>
-                </div>
-            </div>
-            <div class="content-card">
-                <div class="card-image" style="background-image: url('https://images.pexels.com/photos/5320015/pexels-photo-5320015.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');"></div>
-                <div class="card-body">
-                    <h3>Cuestionarios</h3>
-                    <p>Evaluaciones cortas para medir tu avance antes de las sesiones prácticas y el examen oficial.</p>
-                    <a class="btn-primary" href="CursosDisponibles.html">Responder</a>
-                </div>
+            <div class="contact-card">
+                <form>
+                    <!-- Formulario de contacto sin procesamiento real para mantener la estructura estática -->
+                    <label for="nombre">Nombre</label>
+                    <input id="nombre" name="nombre" type="text" placeholder="Ingresa tu nombre completo">
+
+                    <label for="correo">Correo electrónico</label>
+                    <input id="correo" name="correo" type="email" placeholder="correo@ejemplo.com">
+
+                    <label for="mensaje">Mensaje</label>
+                    <textarea id="mensaje" name="mensaje" placeholder="Cuéntanos en qué podemos ayudarte"></textarea>
+
+                    <button class="btn-primary" type="submit">Enviar consulta</button>
+                </form>
             </div>
         </div>
     </section>
 
     <footer>
-        <p>© 2024 Escuela de Conductores J&J Palacios. Material reservado para alumnos inscritos.</p>
+        <p>© 2024 Escuela de Conductores J&J Palacios. Estamos para ayudarte.</p>
     </footer>
 </body>
 </html>

@@ -13,6 +13,10 @@
             --brand-gray: #f4f4f4;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -36,7 +40,8 @@
             align-items: center;
             color: white;
             font-weight: bold;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
+            letter-spacing: 0.5px;
         }
         
         .logo-img-placeholder {
@@ -49,13 +54,19 @@
             align-items: center;
             justify-content: center;
             border: 2px solid white;
+            font-size: 0.8rem;
         }
 
         nav a {
             color: white;
             text-decoration: none;
             margin: 0 15px;
-            font-weight: 500;
+            font-weight: 600;
+            transition: opacity 0.3s ease;
+        }
+
+        nav a:hover {
+            opacity: 0.85;
         }
 
         .btn-login {
@@ -76,20 +87,46 @@
 
         .hero {
             position: relative;
-            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://cdn-blog.superprof.com/blog_cl/wp-content/uploads/2022/02/aprender-a-manejar.jpg.webp') center/cover no-repeat;
+            background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('https://images.pexels.com/photos/7698928/pexels-photo-7698928.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1') center/cover no-repeat;
             color: white;
             text-align: center;
-            padding: 120px 20px;
+            padding: 120px 20px 140px;
         }
 
         .hero h1 {
             font-size: 3rem;
             margin-bottom: 10px;
-            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.45);
         }
         
-        .hero span {
-            color: var(--brand-red);
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background-color: var(--brand-red);
+            color: white;
+            border: none;
+            padding: 12px 22px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.25);
         }
 
         .section-container {
@@ -101,7 +138,7 @@
         h2 {
             text-align: center;
             color: var(--brand-red);
-            font-size: 2.2rem;
+            font-size: 2.1rem;
             margin-bottom: 40px;
             text-transform: uppercase;
         }
@@ -112,73 +149,33 @@
             padding: 40px;
             border-left: 5px solid var(--brand-red);
             border-radius: 8px;
+            line-height: 1.6;
         }
 
-        /* CURSOS */
-        .courses-grid {
+        .highlights {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 20px;
+            margin-top: 35px;
         }
 
-        .course-card {
-            border: 1px solid #ddd;
+        .highlight-card {
+            background: white;
+            border: 1px solid #e5e5e5;
             border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            text-align: center;
-            padding: 20px;
-            transition: transform 0.3s;
-        }
-
-        .course-card:hover {
-            transform: translateY(-5px);
+            padding: 24px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+            display: grid;
+            grid-template-columns: 70px 1fr;
+            gap: 15px;
+            align-items: center;
         }
 
         .icon-car {
-            font-size: 3rem;
-            color: var(--brand-black);
-            margin-bottom: 15px;
+            width: 70px;
+            height: 42px;
         }
 
-        /* ZONA ALUMNOS (AULA VIRTUAL) */
-        .student-zone {
-            background-color: var(--brand-red);
-            color: white;
-            text-align: center;
-            padding: 80px 20px;
-        }
-
-        .student-zone h2 {
-            color: white;
-            border-bottom: 2px solid white;
-            display: inline-block;
-            padding-bottom: 10px;
-        }
-
-        .login-box {
-            background: white;
-            color: black;
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-
-        .btn-primary {
-            background-color: var(--brand-red);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-size: 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 15px;
-        }
-
-        /* FOOTER & CONTACTO */
         footer {
             background-color: var(--brand-black);
             color: white;
@@ -199,11 +196,13 @@
             padding-bottom: 10px;
         }
 
-        .social-links a {
+        .footer-col p, .footer-col a {
             color: white;
-            font-size: 1.2rem;
-            margin-right: 15px;
+            margin: 6px 0;
             text-decoration: none;
+        }
+        .footer-col a:hover {
+            text-decoration: underline;
         }
 
     </style>
@@ -216,91 +215,69 @@
             J&J PALACIOS
         </div>
         <nav>
-            <a href="#inicio">Inicio</a>
-            <a href="#nosotros">Nosotros</a>
-            <a href="#cursos">Cursos</a>
-            <a href="#contacto">Contacto</a>
+            <a href="index.html">Inicio</a>
+            <a href="ListaDeContenidos.html">Contenido</a>
+            <a href="CursosDisponibles.html">Cursos</a>
+            <a href="Contacto.html">Contacto</a>
         </nav>
-        <a href="#aula-virtual" class="btn-login">🔒 Acceso Alumnos</a>
+        <a href="ListaDeContenidos.html" class="btn-login">Contenido Alumnos</a>
     </header>
 
-    <section id="inicio" class="hero">
-        <h1>Aprende a conducir <br>con <span>Confianza</span></h1>
-        <p>Tu licencia de conducir comienza en Escuela J&J Palacios.</p>
+    <section class="hero">
+        <h1>Aprende a conducir con confianza y seguridad</h1>
+        <p>Formamos conductores responsables con materiales claros, práctica guiada y acompañamiento constante.</p>
+        <div class="hero-actions">
+            <a class="btn-primary" href="CursosDisponibles.html">Explorar cursos</a>
+            <a class="btn-primary" href="ListaDeContenidos.html">Ir al aula virtual</a>
+        </div>
     </section>
 
-    <section id="nosotros" class="section-container">
-        <h2>¿Quienes Somos?</h2>
+    <section class="section-container">
+        <h2>Por qué elegir J&J Palacios</h2>
         <div class="about-box">
-            <p><strong>[Espacio para redacción]</strong></p>
-            <p>Somos una Escuela de Conductores comprometida con la seguridad vial y la formación integral de nuevos conductores. Aquí explicaremos nuestra trayectoria, misión y por qué elegirnos.</p>
+            <p>Somos una escuela de conductores que combina metodología clara, instructores con experiencia comprobada y vehículos de uso cotidiano para que practiques en el entorno más parecido a tu día a día.</p>
+            <p>En esta página encontrarás un resumen de quiénes somos. Para revisar el detalle de contenidos, materiales y evaluaciones, utiliza el menú superior que te llevará a cada sección específica.</p>
         </div>
-    </section>
-
-    <section id="cursos" class="section-container">
-        <h2>Nuestros Cursos</h2>
-        <div class="courses-grid">
-            <div class="course-card">
-                <div class="icon-car">🚗
-                    <!-- Ícono simple de automóvil creado con SVG para mantener la temática de conducción -->
-                    <svg width="60" height="32" viewBox="0 0 60 32" aria-hidden="true" focusable="false">
-                        <rect x="8" y="12" width="44" height="12" rx="4" fill="#1a1a1a"></rect>
-                        <rect x="18" y="8" width="24" height="6" rx="2" fill="#f53333"></rect>
-                        <circle cx="20" cy="26" r="4" fill="#666"></circle>
-                        <circle cx="40" cy="26" r="4" fill="#666"></circle>
-                    </svg>
+        <div class="highlights">
+            <div class="highlight-card">
+                <svg class="icon-car" viewBox="0 0 80 50" aria-hidden="true" focusable="false">
+                    <rect x="10" y="20" width="50" height="18" rx="4" fill="#1a1a1a"></rect>
+                    <rect x="25" y="14" width="28" height="8" rx="2" fill="#f53333"></rect>
+                    <circle cx="25" cy="40" r="7" fill="#666"></circle>
+                    <circle cx="52" cy="40" r="7" fill="#666"></circle>
+                </svg>
+                <div>
+                    <h3>Vehículos urbanos</h3>
+                    <p>Prácticas en automóviles de uso diario para que cada maniobra se traduzca en confianza real en las calles.</p>
                 </div>
-                <h3>Licencia Clase B</h3>
-                <p>Curso completo para vehículos particulares. Incluye teoría y práctica.</p>
-                <button class="btn-primary" style="background-color: #333;">Ver Detalles</button>
             </div>
-            <div class="course-card">
-                <div class="icon-car">🏍️
-                    <!-- Ícono estilizado de motocicleta con SVG para resaltar la categoría -->
-                    <svg width="60" height="32" viewBox="0 0 60 32" aria-hidden="true" focusable="false">
-                        <circle cx="18" cy="22" r="5" fill="#666"></circle>
-                        <circle cx="42" cy="22" r="5" fill="#666"></circle>
-                        <rect x="22" y="14" width="14" height="4" rx="2" fill="#1a1a1a"></rect>
-                        <rect x="28" y="10" width="8" height="4" rx="1" fill="#f53333"></rect>
-                        <rect x="16" y="16" width="6" height="3" rx="1" fill="#1a1a1a"></rect>
-                    </svg>
+            <div class="highlight-card">
+                <svg class="icon-car" viewBox="0 0 80 50" aria-hidden="true" focusable="false">
+                    <rect x="12" y="22" width="52" height="16" rx="4" fill="#1a1a1a"></rect>
+                    <rect x="30" y="16" width="22" height="7" rx="2" fill="#f53333"></rect>
+                    <circle cx="26" cy="40" r="7" fill="#666"></circle>
+                    <circle cx="55" cy="40" r="7" fill="#666"></circle>
+                </svg>
+                <div>
+                    <h3>Guías paso a paso</h3>
+                    <p>Contenido estructurado para que avances por unidades, con materiales complementarios y cuestionarios.</p>
                 </div>
-                <h3>Licencia Clase C</h3>
-                <p>Especialización para motocicletas con instructores expertos.</p>
-                <button class="btn-primary" style="background-color: #333;">Ver Detalles</button>
             </div>
-             <div class="course-card">
-                <div class="icon-car">🚛
-                    <!-- Ícono de camión en SVG para los cursos profesionales -->
-                    <svg width="60" height="32" viewBox="0 0 60 32" aria-hidden="true" focusable="false">
-                        <rect x="8" y="12" width="28" height="10" rx="2" fill="#1a1a1a"></rect>
-                        <rect x="36" y="14" width="14" height="8" rx="2" fill="#f53333"></rect>
-                        <circle cx="18" cy="24" r="4" fill="#666"></circle>
-                        <circle cx="38" cy="24" r="4" fill="#666"></circle>
-                        <circle cx="48" cy="24" r="4" fill="#666"></circle>
-                    </svg>
+             <div class="highlight-card">
+                <svg class="icon-car" viewBox="0 0 80 50" aria-hidden="true" focusable="false">
+                    <rect x="8" y="20" width="54" height="18" rx="4" fill="#1a1a1a"></rect>
+                    <rect x="26" y="12" width="26" height="10" rx="2" fill="#f53333"></rect>
+                    <circle cx="24" cy="40" r="7" fill="#666"></circle>
+                    <circle cx="54" cy="40" r="7" fill="#666"></circle>
+                </svg>
+                <div>
+                    <h3>Acompañamiento experto</h3>
+                    <p>Instructores disponibles para resolver dudas y reforzar cada tema antes de tu prueba práctica.</p>
                 </div>
-                <h3>Licencia Profesional</h3>
-                <p>Avanza en tu carrera con nuestros cursos profesionales.</p>
-                <button class="btn-primary" style="background-color: #333;">Ver Detalles</button>
             </div>
         </div>
     </section>
-
-    <section id="aula-virtual" class="student-zone">
-        <h2>Aula Virtual Alumnos</h2>
-        <p>Accede a todo el material teórico, exámenes de prueba y videos educativos.</p>
-        <br>
-        <div class="login-box">
-            <h3>Ingreso al Portal</h3>
-            <p style="font-size: 0.9rem; color: #666;">Ingresa con tu RUT y contraseña asignada</p>
-            <input type="text" placeholder="Usuario / RUT" style="width: 90%; padding: 10px; margin: 10px 0;">
-            <input type="password" placeholder="Contraseña" style="width: 90%; padding: 10px; margin: 10px 0;">
-            <button class="btn-primary">Ingresar al Curso Teórico</button>
-        </div>
-    </section>
-
-    <footer id="contacto">
+    <footer>
         <div class="footer-grid">
             <div class="footer-col">
                 <h3>Contáctanos</h3>
@@ -315,11 +292,9 @@
             </div>
             <div class="footer-col">
                 <h3>Síguenos</h3>
-                <div class="social-links">
-                    <a href="#">Facebook</a>
-                    <a href="#">Instagram</a>
-                    <a href="#">WhatsApp</a>
-                </div>
+                <a href="#">Facebook</a>
+                <a href="#">Instagram</a>
+                <a href="#">WhatsApp</a>
             </div>
         </div>
         <div style="text-align: center; margin-top: 40px; border-top: 1px solid #333; padding-top: 20px; font-size: 0.8rem;">
