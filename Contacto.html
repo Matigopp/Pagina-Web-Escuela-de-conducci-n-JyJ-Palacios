@@ -33,26 +33,29 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        .logo-container {
+        /* Logo clickeable que reutiliza la imagen local para evitar dependencias externas */
+        .logo-link {
             display: flex;
             align-items: center;
             color: white;
+            text-decoration: none;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
             font-weight: bold;
             font-size: 1.4rem;
             letter-spacing: 0.5px;
+            gap: 12px;
         }
         
-        .logo-img-placeholder {
-            width: 50px;
-            height: 50px;
-            background-color: black;
+        .logo-img {
+            width: 52px;
+            height: auto;
             border-radius: 50%;
-            margin-right: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             border: 2px solid white;
-            font-size: 0.8rem;
+            object-fit: cover;
         }
 
         nav a {
@@ -187,10 +190,12 @@
 </head>
 <body>
     <header>
-        <div class="logo-container">
-            <div class="logo-img-placeholder">J&J</div> 
-            ESCUELA DE CONDUCTORES J&J PALACIOS SPA
-        </div>
+        <a class="logo-link" href="index.html" aria-label="Volver al inicio">
+            <div class="logo-container">
+                <img class="logo-img" src="images/LOGO.jpg" alt="Logo de la Escuela de Conductores J&J Palacios SPA">
+                <span>ESCUELA DE CONDUCTORES J&J PALACIOS SPA</span>
+            </div>
+        </a>
         <nav>
             <a href="index.html">Inicio</a>
             <a href="ListaDeContenidos.html">Contenido</a>
