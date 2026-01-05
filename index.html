@@ -213,28 +213,26 @@
             line-height: 1.6;
         }
 
-        .highlights {
+        .galeria-examenes {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 20px;
             margin-top: 35px;
         }
 
-        .highlight-card {
+        .tarjeta-imagen {
             background: white;
             border: 1px solid #e5e5e5;
-            border-radius: 8px;
-            padding: 24px;
+            border-radius: 10px;
+            overflow: hidden;
             box-shadow: 0 8px 16px rgba(0,0,0,0.08);
-            display: grid;
-            grid-template-columns: 70px 1fr;
-            gap: 15px;
-            align-items: center;
         }
 
-        .icon-car {
-            width: 70px;
-            height: 42px;
+        .tarjeta-imagen img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: block;
         }
 
         footer {
@@ -313,42 +311,19 @@
             <p>Somos una escuela de conductores que combina metodología clara, instructores con experiencia comprobada y vehículos de uso cotidiano para que practiques en el entorno más parecido a tu día a día.</p>
             <p>En esta página encontrarás un resumen de quiénes somos. Para revisar el detalle de contenidos, materiales y evaluaciones, utiliza el menú superior que te llevará a cada sección específica.</p>
         </div>
-        <div class="highlights">
-            <div class="highlight-card">
-                <svg class="icon-car" viewBox="0 0 80 50" aria-hidden="true" focusable="false">
-                    <rect x="10" y="20" width="50" height="18" rx="4" fill="#1a1a1a"></rect>
-                    <rect x="25" y="14" width="28" height="8" rx="2" fill="#f53333"></rect>
-                    <circle cx="25" cy="40" r="7" fill="#666"></circle>
-                    <circle cx="52" cy="40" r="7" fill="#666"></circle>
-                </svg>
-                <div>
-                    <h3>Vehículos urbanos</h3>
-                    <p>Prácticas en automóviles de uso diario para que cada maniobra se traduzca en confianza real en las calles.</p>
-                </div>
+        <div class="galeria-examenes">
+            <!-- Las rutas incluyen file:// y espacios codificados para mantener compatibilidad al cargar recursos locales en Windows -->
+            <div class="tarjeta-imagen">
+                <img src="file:///C:/Users/Matigop/Desktop/Pagina%20JyJ%20Palacios/images/Imagen%20Examenes.jpeg" alt="Imagen de exámenes teóricos de conducción">
             </div>
-            <div class="highlight-card">
-                <svg class="icon-car" viewBox="0 0 80 50" aria-hidden="true" focusable="false">
-                    <rect x="12" y="22" width="52" height="16" rx="4" fill="#1a1a1a"></rect>
-                    <rect x="30" y="16" width="22" height="7" rx="2" fill="#f53333"></rect>
-                    <circle cx="26" cy="40" r="7" fill="#666"></circle>
-                    <circle cx="55" cy="40" r="7" fill="#666"></circle>
-                </svg>
-                <div>
-                    <h3>Guías paso a paso</h3>
-                    <p>Contenido estructurado para que avances por unidades, con materiales complementarios y cuestionarios.</p>
-                </div>
+            <div class="tarjeta-imagen">
+                <img src="file:///C:/Users/Matigop/Desktop/Pagina%20JyJ%20Palacios/images/Foto%20Examenes.jpeg" alt="Fotografía de exámenes prácticos en pista">
             </div>
-             <div class="highlight-card">
-                <svg class="icon-car" viewBox="0 0 80 50" aria-hidden="true" focusable="false">
-                    <rect x="8" y="20" width="54" height="18" rx="4" fill="#1a1a1a"></rect>
-                    <rect x="26" y="12" width="26" height="10" rx="2" fill="#f53333"></rect>
-                    <circle cx="24" cy="40" r="7" fill="#666"></circle>
-                    <circle cx="54" cy="40" r="7" fill="#666"></circle>
-                </svg>
-                <div>
-                    <h3>Acompañamiento experto</h3>
-                    <p>Instructores disponibles para resolver dudas y reforzar cada tema antes de tu prueba práctica.</p>
-                </div>
+            <div class="tarjeta-imagen">
+                <img src="file:///C:/Users/Matigop/Desktop/Pagina%20JyJ%20Palacios/images/Examenes%20psico.jpeg" alt="Evaluación psicológica para licencias de conducción">
+            </div>
+             <div class="tarjeta-imagen">
+                <img src="file:///C:/Users/Matigop/Desktop/Pagina%20JyJ%20Palacios/images/Examenes.jpeg" alt="Material de estudio para exámenes de conducción">
             </div>
         </div>
     </section>
