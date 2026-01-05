@@ -90,10 +90,35 @@
 
         .hero {
             position: relative;
-            background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('https://images.pexels.com/photos/7698928/pexels-photo-7698928.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1') center/cover no-repeat;
             color: white;
             text-align: center;
             padding: 120px 20px 140px;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        .hero-fondos {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .hero-fondo {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1.2s ease;
+        }
+
+        .hero-fondo.activo {
+            opacity: 1;
+        }
+
+        .hero-contenido {
+            position: relative;
+            z-index: 1;
         }
 
         .hero h1 {
@@ -229,11 +254,18 @@
     </header>
 
     <section class="hero">
-        <h1>Aprende a conducir con confianza y seguridad</h1>
-        <p>Formamos conductores responsables con materiales claros, práctica guiada y acompañamiento constante.</p>
-        <div class="hero-actions">
-            <a class="btn-primary" href="CursosDisponibles.html">Explorar cursos</a>
-            <a class="btn-primary" href="ListaDeContenidos.html">Ir al aula virtual</a>
+        <div class="hero-fondos" aria-hidden="true">
+            <div class="hero-fondo activo" style="background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('https://images.pexels.com/photos/7698928/pexels-photo-7698928.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&dpr=1');"></div>
+            <div class="hero-fondo" style="background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('https://images.pexels.com/photos/70912/pexels-photo-70912.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&dpr=1');"></div>
+            <div class="hero-fondo" style="background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&dpr=1');"></div>
+        </div>
+        <div class="hero-contenido">
+            <h1>Aprende a conducir con confianza y seguridad</h1>
+            <p>Formamos conductores responsables con materiales claros, práctica guiada y acompañamiento constante.</p>
+            <div class="hero-actions">
+                <a class="btn-primary" href="CursosDisponibles.html">Explorar cursos</a>
+                <a class="btn-primary" href="ListaDeContenidos.html">Ir al aula virtual</a>
+            </div>
         </div>
     </section>
 
@@ -306,6 +338,21 @@
             © 2024 Escuela de Conductores J&J Palacios SPA Autorizados por el ministerio.
         </div>
     </footer>
+    <script>
+        // Animación simple para ir rotando las imágenes de fondo del hero
+        document.addEventListener('DOMContentLoaded', () => {
+            const fondosHero = document.querySelectorAll('.hero-fondo');
+            const totalFondos = fondosHero.length;
+            let indiceActual = 0;
 
+            function mostrarSiguienteFondo() {
+                fondosHero[indiceActual].classList.remove('activo');
+                indiceActual = (indiceActual + 1) % totalFondos;
+                fondosHero[indiceActual].classList.add('activo');
+            }
+
+            setInterval(mostrarSiguienteFondo, 5000);
+        });
+    </script>
 </body>
 </html>
