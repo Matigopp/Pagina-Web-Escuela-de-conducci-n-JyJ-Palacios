@@ -132,6 +132,39 @@
             margin-bottom: 25px;
         }
 
+        .hero-controles {
+            position: absolute;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+
+        .control-hero {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+            background-color: transparent;
+            cursor: pointer;
+            opacity: 0.75;
+            transition: background-color 0.3s ease, transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .control-hero:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .control-hero.activo {
+            background-color: white;
+            opacity: 1;
+        }
+
         .hero-actions {
             display: flex;
             gap: 15px;
@@ -267,6 +300,11 @@
                 <a class="btn-primary" href="ListaDeContenidos.html">Ir al aula virtual</a>
             </div>
         </div>
+        <div class="hero-controles" aria-label="Seleccionar imagen de portada">
+            <button class="control-hero activo" type="button" aria-label="Mostrar imagen uno"></button>
+            <button class="control-hero" type="button" aria-label="Mostrar imagen dos"></button>
+            <button class="control-hero" type="button" aria-label="Mostrar imagen tres"></button>
+        </div>
     </section>
 
     <section class="section-container">
@@ -341,16 +379,25 @@
         // Animación simple para ir rotando las imágenes de fondo del hero
         document.addEventListener('DOMContentLoaded', () => {
             const fondosHero = document.querySelectorAll('.hero-fondo');
-            const totalFondos = fondosHero.length;
+            const controlesHero = document.querySelectorAll('.control-hero');
             let indiceActual = 0;
 
-            function mostrarSiguienteFondo() {
+            function mostrarFondoSeleccionado(indiceNuevo) {
+                if (indiceNuevo === indiceActual) return;
                 fondosHero[indiceActual].classList.remove('activo');
-                indiceActual = (indiceActual + 1) % totalFondos;
-                fondosHero[indiceActual].classList.add('activo');
+                controlesHero[indiceActual].classList.remove('activo');
+
+                fondosHero[indiceNuevo].classList.add('activo');
+                controlesHero[indiceNuevo].classList.add('activo');
+
+                indiceActual = indiceNuevo;
             }
 
-            setInterval(mostrarSiguienteFondo, 5000);
+            controlesHero.forEach((control, indice) => {
+                control.addEventListener('click', () => {
+                    mostrarFondoSeleccionado(indice);
+                });
+            });
         });
     </script>
 </body>
