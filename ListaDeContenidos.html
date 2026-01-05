@@ -181,6 +181,153 @@
             padding: 40px 20px;
             text-align: center;
         }
+
+        /* Capa superpuesta para el modal de acceso */
+        .capa-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 20;
+        }
+
+        .capa-modal.visible {
+            display: flex;
+        }
+
+        .modal-acceso {
+            background: #ffffff;
+            border-radius: 14px;
+            box-shadow: 0 18px 35px rgba(0,0,0,0.18);
+            max-width: 420px;
+            width: 100%;
+            padding: 26px 28px;
+            position: relative;
+        }
+
+        .modal-logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .modal-logo img {
+            width: 82px;
+            height: 82px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid var(--brand-red);
+        }
+
+        .modal-encabezado {
+            display: flex;
+            align-items: start;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .modal-encabezado h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            color: #1f1f1f;
+        }
+
+        .modal-encabezado p {
+            margin: 6px 0 0 0;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .icono-info {
+            margin-left: auto;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid #cdd4df;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #6c7a92;
+            background: #f5f7fb;
+        }
+
+        .grupo-campo {
+            margin-bottom: 14px;
+        }
+
+        .grupo-campo label {
+            display: block;
+            margin-bottom: 6px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .campo-input {
+            position: relative;
+        }
+
+        .campo-input input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #d3d9e4;
+            border-radius: 8px;
+            font-size: 0.98rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .campo-input input:focus {
+            outline: none;
+            border-color: var(--brand-red);
+            box-shadow: 0 0 0 3px rgba(245, 51, 51, 0.16);
+        }
+
+        .btn-ojo {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6b7380;
+            font-size: 0.95rem;
+        }
+
+        .btn-ingresar {
+            width: 100%;
+            margin-top: 6px;
+            padding: 12px;
+            border: none;
+            background: #1c63f2;
+            color: white;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.2s ease;
+            box-shadow: 0 10px 25px rgba(28, 99, 242, 0.28);
+        }
+
+        .btn-ingresar:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 26px rgba(28, 99, 242, 0.32);
+        }
+
+        .cerrar-modal {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: #6b7380;
+        }
+
     </style>
 </head>
 <body>
@@ -213,7 +360,7 @@
                 <div class="card-body">
                     <h3>Unidades</h3>
                     <p>Lecciones paso a paso con ejemplos de conducción urbana y reglamentación vigente.</p>
-                    <a class="btn-primary" href="CursosDisponibles.html">Acceder a Unidades</a>
+                    <a class="btn-primary" href="CursosDisponibles.html" data-modal-acceso="true">Acceder a Unidades</a>
                 </div>
             </div>
             <div class="content-card">
@@ -221,7 +368,7 @@
                 <div class="card-body">
                     <h3>Material de Apoyo</h3>
                     <p>Guías descargables, cuestionarios y documentos explicativos para reforzar el aprendizaje.</p>
-                    <a class="btn-primary" href="CursosDisponibles.html">Acceder al Material</a>
+                    <a class="btn-primary" href="CursosDisponibles.html" data-modal-acceso="true">Acceder al Material</a>
                 </div>
             </div>
             <div class="content-card">
@@ -239,5 +386,75 @@
     <footer>
         <p>© 2024 Escuela de Conductores J&J Palacios SPA Autorizados por el ministerio.</p>
     </footer>
+    <div class="capa-modal" id="capa-modal" aria-hidden="true">
+        <div class="modal-acceso" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-acceso">
+            <button class="cerrar-modal" id="cerrar-modal" aria-label="Cerrar formulario de ingreso">×</button>
+            <div class="modal-logo">
+                <img src="images/LOGO.jpg" alt="Logo de la escuela de conductores">
+            </div>
+            <div class="modal-encabezado">
+                <div>
+                    <h3 id="titulo-modal-acceso">Iniciar sesión</h3>
+                    <p>Utilice su nombre de usuario y contraseña para acceder.</p>
+                </div>
+                <span class="icono-info" aria-hidden="true">i</span>
+            </div>
+            <form>
+                <div class="grupo-campo">
+                    <label for="campo-usuario">Usuario</label>
+                    <div class="campo-input">
+                        <input id="campo-usuario" name="usuario" type="text" placeholder="Ej. Administrador" autocomplete="username">
+                    </div>
+                </div>
+                <div class="grupo-campo">
+                    <label for="campo-contrasena">Contraseña</label>
+                    <div class="campo-input">
+                        <input id="campo-contrasena" name="contrasena" type="password" placeholder="Igual que el nombre de usuario" autocomplete="current-password">
+                        <button class="btn-ojo" type="button" id="toggle-contrasena" aria-label="Mostrar u ocultar contraseña">Ver</button>
+                    </div>
+                </div>
+                <button class="btn-ingresar" type="submit">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Este script intercepta los clics de acceso para mostrar el modal y permite cerrarlo o alternar la visibilidad de la contraseña.
+        const capaModal = document.getElementById('capa-modal');
+        const enlacesAcceso = document.querySelectorAll('[data-modal-acceso="true"]');
+        const btnCerrarModal = document.getElementById('cerrar-modal');
+        const botonToggleContrasena = document.getElementById('toggle-contrasena');
+        const campoContrasena = document.getElementById('campo-contrasena');
+
+        function mostrarModalAcceso(evento) {
+            evento.preventDefault();
+            capaModal.classList.add('visible');
+            capaModal.setAttribute('aria-hidden', 'false');
+            document.getElementById('campo-usuario').focus();
+        }
+
+        function ocultarModalAcceso() {
+            capaModal.classList.remove('visible');
+            capaModal.setAttribute('aria-hidden', 'true');
+        }
+
+        function alternarContrasena() {
+            const esTexto = campoContrasena.type === 'text';
+            campoContrasena.type = esTexto ? 'password' : 'text';
+            botonToggleContrasena.textContent = esTexto ? 'Ver' : 'Ocultar';
+        }
+
+        enlacesAcceso.forEach(function(enlace) {
+            enlace.addEventListener('click', mostrarModalAcceso);
+        });
+
+        btnCerrarModal.addEventListener('click', ocultarModalAcceso);
+        capaModal.addEventListener('click', function(evento) {
+            if (evento.target === capaModal) {
+                ocultarModalAcceso();
+            }
+        });
+        botonToggleContrasena.addEventListener('click', alternarContrasena);
+    </script>
 </body>
 </html>
