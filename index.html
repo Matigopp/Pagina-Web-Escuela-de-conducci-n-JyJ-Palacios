@@ -343,6 +343,39 @@
             text-decoration: underline;
         }
 
+        .redes-sociales {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .enlace-red-social {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .enlace-red-social:hover {
+            text-decoration: none;
+            background-color: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .icono-red-social {
+            width: 22px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+
+
     </style>
 </head>
 <body>
@@ -428,9 +461,16 @@
             </div>
             <div class="footer-col">
                 <h3>Síguenos</h3>
-                <a href="#">Facebook</a>
-                <a href="#">Instagram</a>
-                <a href="#">WhatsApp</a>
+                <div class="redes-sociales">
+                    <a class="enlace-red-social" href="https://www.facebook.com/profile.php?id=61585570170056&locale=es_LA" target="_blank" rel="noopener noreferrer">
+                        <img class="icono-red-social" src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/facebook.svg" alt="Logo de Facebook">
+                        <span>Facebook</span>
+                    </a>
+                    <a class="enlace-red-social" href="https://www.instagram.com/conductoresjjpalacios/" target="_blank" rel="noopener noreferrer">
+                        <img class="icono-red-social" src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg" alt="Logo de Instagram">
+                        <span>Instagram</span>
+                    </a>
+                </div>
             </div>
         </div>
         <div style="text-align: center; margin-top: 40px; border-top: 1px solid #333; padding-top: 20px; font-size: 0.8rem;">
