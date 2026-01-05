@@ -226,6 +226,11 @@
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease;
+        }
+
+        .tarjeta-imagen:hover {
+            transform: translateY(-2px);
         }
 
         .tarjeta-imagen img {
@@ -233,6 +238,80 @@
             height: 220px;
             object-fit: cover;
             display: block;
+            cursor: zoom-in;
+            transition: transform 0.25s ease;
+        }
+
+        .tarjeta-imagen img:focus-visible {
+            outline: 3px solid var(--brand-red);
+            outline-offset: 4px;
+        }
+
+        .visor-imagen {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.28s ease;
+            z-index: 999;
+            padding: 20px;
+        }
+
+        .visor-imagen.activo {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .visor-caja {
+            position: relative;
+            max-width: 90vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .visor-caja img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 12px;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.35);
+            transform: scale(0.94);
+            transition: transform 0.28s ease;
+        }
+
+        .visor-imagen.activo .visor-caja img {
+            transform: scale(1);
+        }
+
+        .boton-cerrar {
+            background: rgba(26, 26, 26, 0.85);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.15s ease;
+        }
+
+        .boton-cerrar:hover {
+            background: rgba(26, 26, 26, 1);
+            transform: translateY(-1px);
+        }
+
+        .boton-cerrar:focus-visible {
+            outline: 3px solid var(--brand-red);
+            outline-offset: 3px;
+        }
+
+        body.sin-scroll {
+            overflow: hidden;
         }
 
         footer {
@@ -327,6 +406,14 @@
             </div>
         </div>
     </section>
+
+    <div class="visor-imagen" aria-hidden="true">
+        <div class="visor-caja" role="dialog" aria-modal="true" aria-label="Vista ampliada de la imagen de la galería">
+            <img src="" alt="">
+            <button type="button" class="boton-cerrar" aria-label="Cerrar imagen ampliada">Cerrar</button>
+        </div>
+    </div>
+
     <footer>
         <div class="footer-grid">
             <div class="footer-col">
@@ -372,6 +459,55 @@
                 control.addEventListener('click', () => {
                     mostrarFondoSeleccionado(indice);
                 });
+            });
+             // Visor para ampliar imágenes de la galería con fondo sombreado
+            const imagenesGaleria = document.querySelectorAll('.tarjeta-imagen img');
+            const visorImagen = document.querySelector('.visor-imagen');
+            const contenedorImagen = visorImagen.querySelector('img');
+            const botonCerrar = visorImagen.querySelector('.boton-cerrar');
+            const cuerpoDocumento = document.body;
+
+            function abrirVisor(imagenSeleccionada) {
+                contenedorImagen.src = imagenSeleccionada.src;
+                contenedorImagen.alt = imagenSeleccionada.alt || 'Imagen ampliada de la galería';
+                visorImagen.classList.add('activo');
+                visorImagen.setAttribute('aria-hidden', 'false');
+                cuerpoDocumento.classList.add('sin-scroll');
+            }
+
+            function cerrarVisor() {
+                visorImagen.classList.remove('activo');
+                visorImagen.setAttribute('aria-hidden', 'true');
+                contenedorImagen.removeAttribute('src');
+                contenedorImagen.removeAttribute('alt');
+                cuerpoDocumento.classList.remove('sin-scroll');
+            }
+
+            imagenesGaleria.forEach((imagen) => {
+                imagen.setAttribute('tabindex', '0');
+                imagen.addEventListener('click', () => abrirVisor(imagen));
+                imagen.addEventListener('keydown', (evento) => {
+                    if (evento.key === 'Enter' || evento.key === ' ') {
+                        evento.preventDefault();
+                        abrirVisor(imagen);
+                    }
+                });
+            });
+
+            visorImagen.addEventListener('click', (evento) => {
+                if (evento.target === visorImagen) {
+                    cerrarVisor();
+                }
+            });
+
+            botonCerrar.addEventListener('click', () => {
+                cerrarVisor();
+            });
+
+            document.addEventListener('keydown', (evento) => {
+                if (evento.key === 'Escape' && visorImagen.classList.contains('activo')) {
+                    cerrarVisor();
+                }
             });
         });
     </script>
