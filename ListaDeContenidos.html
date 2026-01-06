@@ -451,6 +451,21 @@
             text-decoration: underline;
         }
 
+        .estado-documentos {
+            margin: 0 0 12px 0;
+            color: #1c63f2;
+            font-weight: 600;
+            display: none;
+        }
+
+        .estado-documentos.visible {
+            display: block;
+        }
+
+        .estado-documentos.error {
+            color: #c0392b;
+        }
+
     </style>
 </head>
 <body>
@@ -550,6 +565,7 @@
             </div>
             <button class="cerrar-panel" id="cerrar-documentos" aria-label="Cerrar lista de documentos">×</button>
         </div>
+        <p class="estado-documentos" id="estado-documentos" aria-live="assertive"></p>
         <ul class="lista-documentos" id="lista-documentos"></ul>
     </div>
 
@@ -567,45 +583,16 @@
         const listaDocumentos = document.getElementById('lista-documentos');
         const tituloPanelDocumentos = document.getElementById('titulo-panel-documentos');
         const descripcionPanelDocumentos = document.getElementById('descripcion-panel-documentos');
+        const estadoDocumentos = document.getElementById('estado-documentos');
         let usuarioAutenticado = false;
+        let datosUsuario = null;
         let tipoListaSolicitada = 'unidades';
 
-        // Rutas relativas y textos para las listas disponibles.
-        const documentosUnidades = [
-            {
-                titulo: 'Unidad 1',
-                descripcion: 'Documento introductorio con los primeros pasos.',
-                url: 'Docs/UNIDAD-1.pdf'
-            },
-            {
-                titulo: 'Unidad 2',
-                descripcion: 'Material para continuar con la preparación teórica.',
-                url: 'Docs/UNIDAD-2.pdf'
-            },
-            {
-                titulo: 'Unidad 3',
-                descripcion: 'Documento de cierre para reforzar el aprendizaje.',
-                url: 'Docs/UNIDAD-3.pdf'
-            }
-        ];
-
-        const documentosMaterialApoyo = [
-            {
-                titulo: 'Señales de advertencia',
-                descripcion: 'Resumen visual de las señales de advertencia incluidas en el curso.',
-                url: 'Docs/SEÑALES DE ADVERTENCIA.pdf'
-            },
-            {
-                titulo: 'Señales reglamentarias',
-                descripcion: 'Documento con las señales reglamentarias necesarias para aprobar.',
-                url: 'Docs/SEÑALES REGLAMENTARIAS.pdf'
-            },
-            {
-                titulo: 'Señales informativas',
-                descripcion: 'Guía de señales informativas para conducción urbana y carretera.',
-                url: 'Docs/SEÑALES INFORMATIVAS.pdf'
-            }
-        ];
+        function actualizarEstadoDocumentos(mensaje, esError = false) {
+            estadoDocumentos.textContent = mensaje;
+            estadoDocumentos.classList.toggle('visible', Boolean(mensaje));
+            estadoDocumentos.classList.toggle('error', esError);
+        }
 
 
         // Muestra el modal de acceso si aún no se ha autenticado el usuario.
@@ -638,8 +625,8 @@
             botonToggleContrasena.textContent = esTexto ? 'Ver' : 'Ocultar';
         }
 
-        // Controla el formulario de ingreso validando las credenciales básicas.
-        function manejarIngreso(evento) {
+        // Controla el formulario de ingreso validando las credenciales con la base de datos.
+        async function manejarIngreso(evento) {
             evento.preventDefault();
             const usuario = document.getElementById('campo-usuario').value.trim();
             const contrasena = campoContrasena.value.trim();
@@ -650,42 +637,90 @@
                 return;
             }
 
-            if (usuario !== contrasena) {
-                mensajeError.textContent = 'El usuario y la contraseña deben coincidir para este acceso.';
+            try {
+                const respuesta = await autenticarUsuario(usuario, contrasena);
+                usuarioAutenticado = true;
+                datosUsuario = respuesta.usuario;
+                ocultarModalAcceso();
+                await mostrarPanelDocumentos(tipoListaSolicitada);
+            } catch (error) {
+                const mensaje = error?.message || 'No se pudo validar el acceso.';
+                mensajeError.textContent = mensaje;
                 mensajeError.classList.add('visible');
-                return;
-            }
-
-            usuarioAutenticado = true;
-            ocultarModalAcceso();
-            mostrarPanelDocumentos(tipoListaSolicitada);
+                }
         }
 
-        // Muestra el cuadro con los documentos solicitados y los renderiza dinámicamente.
-        function mostrarPanelDocumentos(tipoLista) {
-            const esMaterialApoyo = tipoLista === 'material';
-            const documentosParaMostrar = esMaterialApoyo ? documentosMaterialApoyo : documentosUnidades;
-            tituloPanelDocumentos.textContent = esMaterialApoyo ? 'Material de apoyo' : 'Documentos de unidades';
-            descripcionPanelDocumentos.textContent = esMaterialApoyo ? 'Vista previa y descarga en línea del material complementario.' : 'Vista previa y descarga rápida de las unidades.';
+        async function autenticarUsuario(usuario, contrasena) {
+            const respuesta = await fetch('/api/autenticacion', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ usuario, contrasena })
+            });
+
+            const datos = await respuesta.json().catch(() => ({}));
+            if (!respuesta.ok || !datos.exito) {
+                const mensaje = datos.mensaje || 'Las credenciales no son válidas.';
+                throw new Error(mensaje);
+            }
+            return datos;
+        }
+
+        async function obtenerDocumentosPorTipo(tipo) {
+            const respuesta = await fetch(`/api/documentos?tipo=${encodeURIComponent(tipo)}`);
+            const datos = await respuesta.json().catch(() => ({}));
+
+            if (!respuesta.ok || !datos.exito) {
+                const mensaje = datos.mensaje || 'No se pudieron obtener los documentos.';
+                throw new Error(mensaje);
+            }
+
+            return Array.isArray(datos.documentos) ? datos.documentos : [];
+        }
+
+        function renderizarDocumentos(documentos) {
             listaDocumentos.innerHTML = '';
-            documentosParaMostrar.forEach(function(documento) {
+            documentos.forEach(function(documento) {
                 const elemento = document.createElement('li');
                 elemento.className = 'item-documento';
                 elemento.innerHTML = `
-                    <div class="vista-previa">
-                        <object data="${documento.url}" type="application/pdf" aria-label="Vista previa de ${documento.titulo}"></object>
+                    <div class=\"vista-previa\">
+                        <object data=\"${documento.url}\" type=\"application/pdf\" aria-label=\"Vista previa de ${documento.titulo}\"></object>
                     </div>
-                    <div class="detalle-documento">
+                    <div class=\"detalle-documento\">
                         <h5>${documento.titulo}</h5>
-                        <p>${documento.descripcion}</p>
-                        <a href="${documento.url}" download>Descargar</a>
-                        <a href="${documento.url}" target="_blank" rel="noopener">Ver en línea</a>
+                        <p>${documento.descripcion || 'Documento sin descripción disponible.'}</p>
+                        <a href=\"${documento.url}\" download>Descargar</a>
+                        <a href=\"${documento.url}\" target=\"_blank\" rel=\"noopener\">Ver en línea</a>
                     </div>
                 `;
                 listaDocumentos.appendChild(elemento);
             });
+        }
+
+        // Muestra el cuadro con los documentos solicitados y los renderiza dinámicamente desde la base de datos.
+        async function mostrarPanelDocumentos(tipoLista) {
+            const esMaterialApoyo = tipoLista === 'material';
+            tituloPanelDocumentos.textContent = esMaterialApoyo ? 'Material de apoyo' : 'Documentos de unidades';
+            descripcionPanelDocumentos.textContent = esMaterialApoyo ? 'Vista previa y descarga en línea del material complementario.' : 'Vista previa y descarga rápida de las unidades.';
+            actualizarEstadoDocumentos('Cargando documentos...', false);
+            listaDocumentos.innerHTML = '';
             panelDocumentos.classList.add('visible');
             panelDocumentos.setAttribute('aria-hidden', 'false');
+
+            try {
+                const documentos = await obtenerDocumentosPorTipo(tipoLista);
+                if (documentos.length === 0) {
+                    actualizarEstadoDocumentos('No hay documentos disponibles para mostrar.', false);
+                    return;
+                }
+                actualizarEstadoDocumentos('', false);
+                renderizarDocumentos(documentos);
+            } catch (error) {
+                const mensaje = error?.message || 'Hubo un problema al cargar los documentos.';
+                actualizarEstadoDocumentos(mensaje, true);
+            }
         }
 
         // Permite cerrar la vista de documentos.
