@@ -585,8 +585,10 @@
         const descripcionPanelDocumentos = document.getElementById('descripcion-panel-documentos');
         const estadoDocumentos = document.getElementById('estado-documentos');
         const origenActual = window.location.origin;
+        const parametrosBusqueda = new URLSearchParams(window.location.search);
+        const apiPersonalizada = parametrosBusqueda.get('api');
         const esLiveServer = origenActual.includes('127.0.0.1:5500') || origenActual.includes('localhost:5500');
-        const baseApi = esLiveServer ? 'http://localhost:3000' : origenActual;
+        const baseApi = determinarBaseApi(apiPersonalizada);
         let usuarioAutenticado = false;
         let datosUsuario = null;
         let tipoListaSolicitada = 'unidades';
@@ -594,6 +596,38 @@
         // Devuelve la ruta completa hacia la API respetando el origen del servidor backend.
         function construirRutaApi(ruta) {
             return `${baseApi}${ruta}`;
+        }
+
+        // Permite definir la API mediante parámetro (?api=http://localhost:4000) o por defecto al backend local.
+        function determinarBaseApi(apiDefinida) {
+            if (apiDefinida) {
+                return normalizarBaseApi(apiDefinida);
+            }
+            if (esLiveServer) {
+                return 'http://localhost:3000';
+            }
+            return normalizarBaseApi(origenActual);
+        }
+
+        // Elimina la barra final para evitar rutas duplicadas al construir los endpoints.
+        function normalizarBaseApi(api) {
+            if (!api) {
+                return '';
+            }
+            return api.endsWith('/') ? api.slice(0, -1) : api;
+        }
+
+        // Centraliza las llamadas a la API y muestra un mensaje claro cuando el servidor no responde.
+        async function solicitarApi(ruta, opciones = {}, mensajeConexion) {
+            const url = construirRutaApi(ruta);
+            try {
+                const respuesta = await fetch(url, opciones);
+                const datos = await respuesta.json().catch(() => ({}));
+                return { respuesta, datos };
+            } catch (_error) {
+                const mensaje = mensajeConexion || 'No se pudo contactar el servidor. Verifique que esté en ejecución y que el puerto configurado sea correcto (puede ajustarlo con el parámetro ?api=http://localhost:PUERTO).';
+                throw new Error(mensaje);
+            }
         }
 
 
@@ -661,16 +695,18 @@
 
         // Envía las credenciales al servidor usando el correo como identificador.
         async function autenticarUsuario(correo, contrasena) {
-            const url = construirRutaApi('/api/autenticacion');
-            const respuesta = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
+            const { respuesta, datos } = await solicitarApi(
+                '/api/autenticacion',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ correo, contrasena })
                 },
-                body: JSON.stringify({ correo, contrasena })
-            });
+                'No se pudo contactar el servidor de autenticación. Asegúrese de que el backend esté activo y que el puerto de la API sea correcto.'
+            );
 
-            const datos = await respuesta.json().catch(() => ({}));
             if (!respuesta.ok || !datos.exito) {
                 const mensaje = datos.mensaje || 'Las credenciales no son válidas.';
                 throw new Error(mensaje);
@@ -679,9 +715,11 @@
         }
 
         async function obtenerDocumentosPorTipo(tipo) {
-            const url = construirRutaApi(`/api/documentos?tipo=${encodeURIComponent(tipo)}`);
-            const respuesta = await fetch(url);
-            const datos = await respuesta.json().catch(() => ({}));
+            const { respuesta, datos } = await solicitarApi(
+                `/api/documentos?tipo=${encodeURIComponent(tipo)}`,
+                {},
+                'No se pudo contactar el servidor para obtener los documentos. Confirme que la API está encendida o ajuste el puerto con el parámetro ?api=http://localhost:PUERTO.'
+            );
 
             if (!respuesta.ok || !datos.exito) {
                 const mensaje = datos.mensaje || 'No se pudieron obtener los documentos.';
