@@ -1,0 +1,16 @@
+{
+  "name": "pagina-web-escuela-de-conduccion-jyjp",
+  "version": "1.0.0",
+  "description": "Conexion a PostgreSQL para Escuela de Conductores J&J Palacios",
+  "main": "configuracion/conexionBaseDatos.js",
+  "scripts": {
+    "probar:conexion": "node configuracion/probarConexion.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "pg": "^8.12.0"
+  }
+}
