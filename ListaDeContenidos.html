@@ -584,9 +584,18 @@
         const tituloPanelDocumentos = document.getElementById('titulo-panel-documentos');
         const descripcionPanelDocumentos = document.getElementById('descripcion-panel-documentos');
         const estadoDocumentos = document.getElementById('estado-documentos');
+        const origenActual = window.location.origin;
+        const esLiveServer = origenActual.includes('127.0.0.1:5500') || origenActual.includes('localhost:5500');
+        const baseApi = esLiveServer ? 'http://localhost:3000' : origenActual;
         let usuarioAutenticado = false;
         let datosUsuario = null;
         let tipoListaSolicitada = 'unidades';
+
+        // Devuelve la ruta completa hacia la API respetando el origen del servidor backend.
+        function construirRutaApi(ruta) {
+            return `${baseApi}${ruta}`;
+        }
+
 
         function actualizarEstadoDocumentos(mensaje, esError = false) {
             estadoDocumentos.textContent = mensaje;
@@ -647,12 +656,13 @@
                 const mensaje = error?.message || 'No se pudo validar el acceso.';
                 mensajeError.textContent = mensaje;
                 mensajeError.classList.add('visible');
-                }
+            }
         }
 
         // Envía las credenciales al servidor usando el correo como identificador.
         async function autenticarUsuario(correo, contrasena) {
-            const respuesta = await fetch('/api/autenticacion', {
+            const url = construirRutaApi('/api/autenticacion');
+            const respuesta = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -669,7 +679,8 @@
         }
 
         async function obtenerDocumentosPorTipo(tipo) {
-            const respuesta = await fetch(`/api/documentos?tipo=${encodeURIComponent(tipo)}`);
+            const url = construirRutaApi(`/api/documentos?tipo=${encodeURIComponent(tipo)}`);
+            const respuesta = await fetch(url);
             const datos = await respuesta.json().catch(() => ({}));
 
             if (!respuesta.ok || !datos.exito) {

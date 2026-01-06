@@ -7,6 +7,19 @@ const puerto = Number(process.env.PUERTO_APP) || 3000;
 
 app.use(express.json());
 
+// Habilita CORS simple para permitir llamadas desde orígenes como Live Server (puerto 5500).
+app.use((solicitud, respuesta, siguiente) => {
+    respuesta.header('Access-Control-Allow-Origin', '*');
+    respuesta.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    respuesta.header('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (solicitud.method === 'OPTIONS') {
+        return respuesta.sendStatus(204);
+    }
+
+    siguiente();
+});
+
 // Sirve los archivos estáticos existentes para mantener la página disponible.
 app.use(express.static(path.join(__dirname)));
 
@@ -74,13 +87,14 @@ app.post('/api/autenticacion', async (solicitud, respuesta) => {
     }
 
     try {
+        // Obtiene el registro y usa la clave almacenada sin asumir un nombre de columna específico.
         const consulta = `
-            SELECT id, correo, nombre_completo, rol
+            SELECT *
             FROM usuarios
-            WHERE correo = $1 AND contrasena = $2
+            WHERE correo = $1
             LIMIT 1
         `;
-        const { rows } = await pool.query(consulta, [correo, contrasena]);
+        const { rows } = await pool.query(consulta, [correo]);
         if (rows.length === 0) {
             return respuesta.status(401).json({
                 exito: false,
@@ -88,7 +102,25 @@ app.post('/api/autenticacion', async (solicitud, respuesta) => {
             });
         }
 
-        respuesta.json({ exito: true, usuario: rows[0] });
+        const usuario = rows[0];
+        const claveRegistrada = usuario.contrasena ?? usuario.password_hash;
+
+        if (!claveRegistrada || claveRegistrada !== contrasena) {
+            return respuesta.status(401).json({
+                exito: false,
+                mensaje: 'Credenciales incorrectas, verifique sus datos.'
+            });
+        }
+
+        respuesta.json({
+            exito: true,
+            usuario: {
+                id: usuario.id_usuario ?? usuario.id,
+                correo: usuario.correo,
+                nombre_completo: usuario.nombre_completo ?? usuario.usuario ?? usuario.correo,
+                rol: usuario.rol ?? 'usuario'
+            }
+        });
     } catch (error) {
         console.error('Error al autenticar usuario:', error);
         respuesta.status(500).json({
