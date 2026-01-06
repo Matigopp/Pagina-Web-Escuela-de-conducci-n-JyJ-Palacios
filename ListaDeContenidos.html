@@ -533,15 +533,15 @@
             <div class="modal-encabezado">
                 <div>
                     <h3 id="titulo-modal-acceso">Iniciar sesión</h3>
-                    <p>Utilice su nombre de usuario y contraseña para acceder.</p>
+                    <p>Utilice su correo y contraseña para acceder.</p>
                 </div>
                 <span class="icono-info" aria-hidden="true">i</span>
             </div>
             <form>
                 <div class="grupo-campo">
-                    <label for="campo-usuario">Usuario</label>
+                    <label for="campo-correo">Correo</label>
                     <div class="campo-input">
-                        <input id="campo-usuario" name="usuario" type="text" placeholder="Ej. Administrador" autocomplete="username">
+                        <input id="campo-correo" name="correo" type="email" placeholder="Ej. persona@dominio.cl" autocomplete="email" inputmode="email">
                     </div>
                 </div>
                 <div class="grupo-campo">
@@ -606,7 +606,7 @@
             }
             capaModal.classList.add('visible');
             capaModal.setAttribute('aria-hidden', 'false');
-            document.getElementById('campo-usuario').focus();
+            document.getElementById('campo-correo').focus();
         }
 
         // Oculta el formulario de acceso.
@@ -628,17 +628,17 @@
         // Controla el formulario de ingreso validando las credenciales con la base de datos.
         async function manejarIngreso(evento) {
             evento.preventDefault();
-            const usuario = document.getElementById('campo-usuario').value.trim();
+            const correo = document.getElementById('campo-correo').value.trim();
             const contrasena = campoContrasena.value.trim();
 
-            if (!usuario || !contrasena) {
-                mensajeError.textContent = 'Ingrese usuario y contraseña para continuar.';
+            if (!correo || !contrasena) {
+                mensajeError.textContent = 'Ingrese correo y contraseña para continuar.';
                 mensajeError.classList.add('visible');
                 return;
             }
 
             try {
-                const respuesta = await autenticarUsuario(usuario, contrasena);
+                const respuesta = await autenticarUsuario(correo, contrasena);
                 usuarioAutenticado = true;
                 datosUsuario = respuesta.usuario;
                 ocultarModalAcceso();
@@ -650,13 +650,14 @@
                 }
         }
 
-        async function autenticarUsuario(usuario, contrasena) {
+        // Envía las credenciales al servidor usando el correo como identificador.
+        async function autenticarUsuario(correo, contrasena) {
             const respuesta = await fetch('/api/autenticacion', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ usuario, contrasena })
+                body: JSON.stringify({ correo, contrasena })
             });
 
             const datos = await respuesta.json().catch(() => ({}));

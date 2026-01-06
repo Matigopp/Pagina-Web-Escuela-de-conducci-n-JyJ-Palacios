@@ -1,6 +1,6 @@
 const path = require('path');
 const express = require('express');
-const { obtenerPool } = require('./configuracion/conexionBaseDatos');
+const { obtenerPool, probarConexion } = require('./configuracion/conexionBaseDatos');
 
 const app = express();
 const puerto = Number(process.env.PUERTO_APP) || 3000;
@@ -38,29 +38,49 @@ app.get('/api/documentos', async (solicitud, respuesta) => {
 });
 
 /**
- * Valida las credenciales contra la tabla usuarios usando columnas usuario y contrasena.
+ * Permite consultar rápidamente si la base de datos responde.
+ */
+app.get('/api/estado-bd', async (_solicitud, respuesta) => {
+    const estado = await probarConexion();
+
+    if (!estado.exito) {
+        return respuesta.status(503).json({
+            exito: false,
+            mensaje: estado.mensaje,
+            detalle: estado.detalle
+        });
+    }
+
+    respuesta.json({
+        exito: true,
+        mensaje: estado.mensaje,
+        fecha: estado.fecha
+    });
+});
+
+/**
+ * Valida las credenciales contra la tabla usuarios usando columnas correo y contrasena.
  * Devuelve los datos básicos del usuario autenticado para mostrar en el cliente si se requiere.
  */
 app.post('/api/autenticacion', async (solicitud, respuesta) => {
-    const { usuario, contrasena } = solicitud.body || {};
+    const { correo, contrasena } = solicitud.body || {};
     const pool = obtenerPool();
 
-    if (!usuario || !contrasena) {
+    if (!correo || !contrasena) {
         return respuesta.status(400).json({
             exito: false,
-            mensaje: 'Debe proporcionar el usuario y la contraseña.'
+            mensaje: 'Debe proporcionar el correo y la contraseña.'
         });
     }
 
     try {
         const consulta = `
-            SELECT id, usuario, nombre_completo, rol
+            SELECT id, correo, nombre_completo, rol
             FROM usuarios
-            WHERE usuario = $1 AND contrasena = $2
+            WHERE correo = $1 AND contrasena = $2
             LIMIT 1
         `;
-        const { rows } = await pool.query(consulta, [usuario, contrasena]);
-
+        const { rows } = await pool.query(consulta, [correo, contrasena]);
         if (rows.length === 0) {
             return respuesta.status(401).json({
                 exito: false,
