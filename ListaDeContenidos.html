@@ -345,10 +345,9 @@
 
         .panel-documentos {
             position: fixed;
-            right: 24px;
-            bottom: 24px;
-            width: 360px;
-            max-width: calc(100% - 32px);
+            top: 18px;
+            left: 50%;
+            width: min(880px, calc(100% - 32px));
             background: #ffffff;
             border-radius: 12px;
             box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
@@ -357,14 +356,16 @@
             z-index: 30;
             opacity: 0;
             pointer-events: none;
-            transform: translateY(14px);
-            transition: opacity 0.2s ease, transform 0.2s ease;
+            transform: translate(-50%, 14px);
+            transition: opacity 0.2s ease, transform 0.2s ease, max-height 0.2s ease;
+            max-height: calc(100vh - 36px);
+            overflow: auto;
         }
 
         .panel-documentos.visible {
             opacity: 1;
             pointer-events: auto;
-            transform: translateY(0);
+            transform: translate(-50%, 0);
         }
 
         .panel-encabezado {
@@ -406,10 +407,10 @@
 
         .item-documento {
             display: grid;
-            grid-template-columns: 120px 1fr;
-            gap: 10px;
-            align-items: center;
-            padding: 10px;
+            grid-template-columns: 180px 1fr;
+            gap: 14px;
+            align-items: stretch;
+            padding: 12px;
             border: 1px solid #eef2f7;
             border-radius: 10px;
         }
@@ -418,7 +419,7 @@
             background: #f8fafc;
             border: 1px solid #e5ebf3;
             border-radius: 8px;
-            height: 120px;
+            height: 160px;
             overflow: hidden;
         }
 
@@ -443,6 +444,7 @@
             color: #1c63f2;
             font-weight: 700;
             text-decoration: none;
+            margin-right: 12px;
         }
 
         .detalle-documento a:hover {
@@ -481,7 +483,7 @@
                 <div class="card-body">
                     <h3>Unidades</h3>
                     <p>Lecciones paso a paso con ejemplos de conducción urbana y reglamentación vigente.</p>
-                    <a class="btn-primary" href="CursosDisponibles.html" data-modal-acceso="true">Acceder a Unidades</a>
+                    <a class="btn-primary" href="CursosDisponibles.html" data-modal-acceso="true" data-lista="unidades">Acceder a Unidades</a>
                 </div>
             </div>
             <div class="content-card">
@@ -489,7 +491,7 @@
                 <div class="card-body">
                     <h3>Material de Apoyo</h3>
                     <p>Guías descargables, cuestionarios y documentos explicativos para reforzar el aprendizaje.</p>
-                    <a class="btn-primary" href="CursosDisponibles.html" data-modal-acceso="true">Acceder al Material</a>
+                    <a class="btn-primary" href="CursosDisponibles.html" data-modal-acceso="true" data-lista="material">Acceder al Material</a>
                 </div>
             </div>
             <div class="content-card">
@@ -543,43 +545,12 @@
     <div class="panel-documentos" id="panel-documentos" aria-hidden="true">
         <div class="panel-encabezado">
             <div>
-                <h4>Documentos de unidades</h4>
-                <p>Vista previa y descarga rápida.</p>
+                <h4 id="titulo-panel-documentos">Documentos de unidades</h4>
+                <p id="descripcion-panel-documentos">Vista previa y descarga rápida.</p>
             </div>
             <button class="cerrar-panel" id="cerrar-documentos" aria-label="Cerrar lista de documentos">×</button>
         </div>
-        <ul class="lista-documentos">
-            <li class="item-documento">
-                <div class="vista-previa">
-                    <object data="Docs/UNIDAD-1.pdf" type="application/pdf" aria-label="Vista previa unidad 1"></object>
-                </div>
-                <div class="detalle-documento">
-                    <h5>Unidad 1</h5>
-                    <p>Documento introductorio con los primeros pasos.</p>
-                    <a href="Docs/UNIDAD-1.pdf" download>Descargar</a>
-                </div>
-            </li>
-            <li class="item-documento">
-                <div class="vista-previa">
-                    <object data="Docs/UNIDAD-2.pdf" type="application/pdf" aria-label="Vista previa unidad 2"></object>
-                </div>
-                <div class="detalle-documento">
-                    <h5>Unidad 2</h5>
-                    <p>Material para continuar con la preparación teórica.</p>
-                    <a href="Docs/UNIDAD-2.pdf" download>Descargar</a>
-                </div>
-            </li>
-            <li class="item-documento">
-                <div class="vista-previa">
-                    <object data="Docs/UNIDAD-3.pdf" type="application/pdf" aria-label="Vista previa unidad 3"></object>
-                </div>
-                <div class="detalle-documento">
-                    <h5>Unidad 3</h5>
-                    <p>Documento de cierre para reforzar el aprendizaje.</p>
-                    <a href="Docs/UNIDAD-3.pdf" download>Descargar</a>
-                </div>
-            </li>
-        </ul>
+        <ul class="lista-documentos" id="lista-documentos"></ul>
     </div>
 
     <script>
@@ -593,14 +564,57 @@
         const panelDocumentos = document.getElementById('panel-documentos');
         const btnCerrarDocumentos = document.getElementById('cerrar-documentos');
         const mensajeError = document.getElementById('mensaje-error');
+        const listaDocumentos = document.getElementById('lista-documentos');
+        const tituloPanelDocumentos = document.getElementById('titulo-panel-documentos');
+        const descripcionPanelDocumentos = document.getElementById('descripcion-panel-documentos');
         let usuarioAutenticado = false;
+        let tipoListaSolicitada = 'unidades';
+
+        // Rutas relativas y textos para las listas disponibles.
+        const documentosUnidades = [
+            {
+                titulo: 'Unidad 1',
+                descripcion: 'Documento introductorio con los primeros pasos.',
+                url: 'Docs/UNIDAD-1.pdf'
+            },
+            {
+                titulo: 'Unidad 2',
+                descripcion: 'Material para continuar con la preparación teórica.',
+                url: 'Docs/UNIDAD-2.pdf'
+            },
+            {
+                titulo: 'Unidad 3',
+                descripcion: 'Documento de cierre para reforzar el aprendizaje.',
+                url: 'Docs/UNIDAD-3.pdf'
+            }
+        ];
+
+        const documentosMaterialApoyo = [
+            {
+                titulo: 'Señales de advertencia',
+                descripcion: 'Resumen visual de las señales de advertencia incluidas en el curso.',
+                url: 'Docs/SEÑALES DE ADVERTENCIA.pdf'
+            },
+            {
+                titulo: 'Señales reglamentarias',
+                descripcion: 'Documento con las señales reglamentarias necesarias para aprobar.',
+                url: 'Docs/SEÑALES REGLAMENTARIAS.pdf'
+            },
+            {
+                titulo: 'Señales informativas',
+                descripcion: 'Guía de señales informativas para conducción urbana y carretera.',
+                url: 'Docs/SEÑALES INFORMATIVAS.pdf'
+            }
+        ];
 
 
         // Muestra el modal de acceso si aún no se ha autenticado el usuario.
         function mostrarModalAcceso(evento) {
             evento.preventDefault();
+            const tipoSolicitado = evento.currentTarget.dataset.lista || 'unidades';
+            tipoListaSolicitada = tipoSolicitado;
             if (usuarioAutenticado) {
-                mostrarPanelDocumentos();
+                mostrarPanelDocumentos(tipoListaSolicitada);
                 return;
             }
             capaModal.classList.add('visible');
@@ -644,11 +658,32 @@
 
             usuarioAutenticado = true;
             ocultarModalAcceso();
-            mostrarPanelDocumentos();
+            mostrarPanelDocumentos(tipoListaSolicitada);
         }
 
-        // Muestra el cuadro con los documentos de las unidades.
-        function mostrarPanelDocumentos() {
+        // Muestra el cuadro con los documentos solicitados y los renderiza dinámicamente.
+        function mostrarPanelDocumentos(tipoLista) {
+            const esMaterialApoyo = tipoLista === 'material';
+            const documentosParaMostrar = esMaterialApoyo ? documentosMaterialApoyo : documentosUnidades;
+            tituloPanelDocumentos.textContent = esMaterialApoyo ? 'Material de apoyo' : 'Documentos de unidades';
+            descripcionPanelDocumentos.textContent = esMaterialApoyo ? 'Vista previa y descarga en línea del material complementario.' : 'Vista previa y descarga rápida de las unidades.';
+            listaDocumentos.innerHTML = '';
+            documentosParaMostrar.forEach(function(documento) {
+                const elemento = document.createElement('li');
+                elemento.className = 'item-documento';
+                elemento.innerHTML = `
+                    <div class="vista-previa">
+                        <object data="${documento.url}" type="application/pdf" aria-label="Vista previa de ${documento.titulo}"></object>
+                    </div>
+                    <div class="detalle-documento">
+                        <h5>${documento.titulo}</h5>
+                        <p>${documento.descripcion}</p>
+                        <a href="${documento.url}" download>Descargar</a>
+                        <a href="${documento.url}" target="_blank" rel="noopener">Ver en línea</a>
+                    </div>
+                `;
+                listaDocumentos.appendChild(elemento);
+            });
             panelDocumentos.classList.add('visible');
             panelDocumentos.setAttribute('aria-hidden', 'false');
         }
