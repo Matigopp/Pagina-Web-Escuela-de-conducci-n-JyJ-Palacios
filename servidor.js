@@ -10,7 +10,7 @@ app.use(express.json());
 // Habilita CORS simple para permitir llamadas desde orígenes como Live Server (puerto 5500).
 app.use((solicitud, respuesta, siguiente) => {
     respuesta.header('Access-Control-Allow-Origin', '*');
-    respuesta.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    respuesta.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     respuesta.header('Access-Control-Allow-Headers', 'Content-Type');
 
     if (solicitud.method === 'OPTIONS') {
@@ -49,6 +49,125 @@ app.get('/api/documentos', async (solicitud, respuesta) => {
         });
     }
 });
+
+
+/**
+ * Registra un documento en la base de datos.
+ */
+app.post('/api/documentos', async (solicitud, respuesta) => {
+    const { titulo, descripcion, url, tipo } = solicitud.body || {};
+    const pool = obtenerPool();
+
+    if (!titulo || !url || !tipo) {
+        return respuesta.status(400).json({
+            exito: false,
+            mensaje: 'Debe proporcionar título, URL y tipo del documento.'
+        });
+    }
+
+    try {
+        const consulta = `
+            INSERT INTO documentos (titulo, descripcion, url, tipo)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id, titulo, descripcion, url, tipo
+        `;
+        const { rows } = await pool.query(consulta, [titulo, descripcion || null, url, tipo]);
+        respuesta.status(201).json({ exito: true, documento: rows[0] });
+    } catch (error) {
+        console.error('Error al crear documento:', error);
+        respuesta.status(500).json({
+            exito: false,
+            mensaje: 'No se pudo crear el documento, intente nuevamente.',
+            detalle: error.message
+        });
+    }
+});
+
+/**
+ * Actualiza un documento existente.
+ */
+app.put('/api/documentos/:id', async (solicitud, respuesta) => {
+    const { id } = solicitud.params;
+    const { titulo, descripcion, url, tipo } = solicitud.body || {};
+    const pool = obtenerPool();
+
+    if (!id || !titulo || !url || !tipo) {
+        return respuesta.status(400).json({
+            exito: false,
+            mensaje: 'Debe proporcionar ID, título, URL y tipo del documento.'
+        });
+    }
+
+    try {
+        const consulta = `
+            UPDATE documentos
+            SET titulo = $1,
+                descripcion = $2,
+                url = $3,
+                tipo = $4
+            WHERE id = $5
+            RETURNING id, titulo, descripcion, url, tipo
+        `;
+        const { rows } = await pool.query(consulta, [titulo, descripcion || null, url, tipo, id]);
+
+        if (rows.length === 0) {
+            return respuesta.status(404).json({
+                exito: false,
+                mensaje: 'No se encontró el documento solicitado.'
+            });
+        }
+
+        respuesta.json({ exito: true, documento: rows[0] });
+    } catch (error) {
+        console.error('Error al actualizar documento:', error);
+        respuesta.status(500).json({
+            exito: false,
+            mensaje: 'No se pudo actualizar el documento, intente nuevamente.',
+            detalle: error.message
+        });
+    }
+});
+
+/**
+ * Elimina un documento por su ID.
+ */
+app.delete('/api/documentos/:id', async (solicitud, respuesta) => {
+    const { id } = solicitud.params;
+    const pool = obtenerPool();
+
+    if (!id) {
+        return respuesta.status(400).json({
+            exito: false,
+            mensaje: 'Debe proporcionar el ID del documento.'
+        });
+    }
+
+    try {
+        const consulta = `
+            DELETE FROM documentos
+            WHERE id = $1
+            RETURNING id
+        `;
+        const { rows } = await pool.query(consulta, [id]);
+
+        if (rows.length === 0) {
+            return respuesta.status(404).json({
+                exito: false,
+                mensaje: 'No se encontró el documento solicitado.'
+            });
+        }
+
+        respuesta.json({ exito: true });
+    } catch (error) {
+        console.error('Error al eliminar documento:', error);
+        respuesta.status(500).json({
+            exito: false,
+            mensaje: 'No se pudo eliminar el documento, intente nuevamente.',
+            detalle: error.message
+        });
+    }
+});
+
 
 /**
  * Permite consultar rápidamente si la base de datos responde.

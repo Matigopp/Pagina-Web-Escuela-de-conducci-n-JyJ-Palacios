@@ -208,6 +208,16 @@
             position: relative;
         }
 
+        .modal-documento {
+            background: #ffffff;
+            border-radius: 14px;
+            box-shadow: 0 18px 35px rgba(0,0,0,0.18);
+            max-width: 520px;
+            width: 100%;
+            padding: 26px 28px;
+            position: relative;
+        }
+
         .modal-logo {
             display: flex;
             justify-content: center;
@@ -271,7 +281,9 @@
             position: relative;
         }
 
-        .campo-input input {
+        .campo-input input,
+        .campo-input textarea,
+        .campo-input select {
             width: 100%;
             padding: 12px 14px;
             border: 1px solid #d3d9e4;
@@ -280,7 +292,14 @@
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .campo-input input:focus {
+        .campo-input textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .campo-input input:focus,
+        .campo-input textarea:focus,
+        .campo-input select:focus {
             outline: none;
             border-color: var(--brand-red);
             box-shadow: 0 0 0 3px rgba(245, 51, 51, 0.16);
@@ -316,6 +335,42 @@
             transform: translateY(-1px);
             box-shadow: 0 12px 26px rgba(28, 99, 242, 0.32);
         }
+
+        .acciones-formulario {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 18px;
+        }
+
+        .btn-secundario {
+            background: #f4f4f4;
+            border: 1px solid #d0d0d0;
+            color: #222;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-secundario:hover {
+            background: #e6e6e6;
+        }
+
+        .btn-primario {
+            background-color: var(--brand-red);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-primario:hover {
+            background-color: #d42b2b;
+        }
+
 
         .cerrar-modal {
             position: absolute;
@@ -374,6 +429,12 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 12px;
+        }
+
+        .acciones-panel-documentos {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
         .panel-encabezado h4 {
@@ -449,6 +510,24 @@
 
         .detalle-documento a:hover {
             text-decoration: underline;
+        }
+
+        .acciones-documento {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .acciones-documento .btn-secundario {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+
+        .acciones-documento .btn-eliminar {
+            border-color: #c0392b;
+            color: #c0392b;
+            background: #fff5f5;
         }
 
         .estado-documentos {
@@ -563,10 +642,60 @@
                 <h4 id="titulo-panel-documentos">Documentos de unidades</h4>
                 <p id="descripcion-panel-documentos">Vista previa y descarga rápida.</p>
             </div>
-            <button class="cerrar-panel" id="cerrar-documentos" aria-label="Cerrar lista de documentos">×</button>
+            <div class="acciones-panel-documentos">
+                <button class="btn-secundario" id="btn-agregar-documento" type="button">Agregar documento</button>
+                <button class="cerrar-panel" id="cerrar-documentos" aria-label="Cerrar lista de documentos">×</button>
+            </div>
         </div>
         <p class="estado-documentos" id="estado-documentos" aria-live="assertive"></p>
         <ul class="lista-documentos" id="lista-documentos"></ul>
+    </div>
+
+    <div class="capa-modal" id="capa-modal-documento" aria-hidden="true">
+        <div class="modal-documento" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-documento">
+            <button class="cerrar-modal" id="cerrar-modal-documento" aria-label="Cerrar formulario de documento">×</button>
+            <div class="modal-encabezado">
+                <div>
+                    <h3 id="titulo-modal-documento">Agregar documento</h3>
+                    <p>Completa los datos para registrar el documento en la base de datos.</p>
+                </div>
+            </div>
+            <form id="formulario-documento">
+                <input type="hidden" id="documento-id">
+                <div class="grupo-campo">
+                    <label for="documento-titulo">Título</label>
+                    <div class="campo-input">
+                        <input id="documento-titulo" name="titulo" type="text" placeholder="Ej. Señales informativas" required>
+                    </div>
+                </div>
+                <div class="grupo-campo">
+                    <label for="documento-descripcion">Descripción</label>
+                    <div class="campo-input">
+                        <textarea id="documento-descripcion" name="descripcion" placeholder="Detalle breve del contenido"></textarea>
+                    </div>
+                </div>
+                <div class="grupo-campo">
+                    <label for="documento-url">URL del documento</label>
+                    <div class="campo-input">
+                        <input id="documento-url" name="url" type="url" placeholder="https://dominio.com/documento.pdf" required>
+                    </div>
+                </div>
+                <div class="grupo-campo">
+                    <label for="documento-tipo">Tipo</label>
+                    <div class="campo-input">
+                        <select id="documento-tipo" name="tipo" required>
+                            <option value="unidades">Unidades</option>
+                            <option value="material">Material de apoyo</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="mensaje-error" id="mensaje-documento" role="alert" aria-live="assertive"></p>
+                <div class="acciones-formulario">
+                    <button class="btn-secundario" type="button" id="cancelar-documento">Cancelar</button>
+                    <button class="btn-primario" type="submit" id="guardar-documento">Guardar</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -579,6 +708,18 @@
         const formularioAcceso = document.querySelector('.modal-acceso form');
         const panelDocumentos = document.getElementById('panel-documentos');
         const btnCerrarDocumentos = document.getElementById('cerrar-documentos');
+        const btnAgregarDocumento = document.getElementById('btn-agregar-documento');
+        const capaModalDocumento = document.getElementById('capa-modal-documento');
+        const btnCerrarModalDocumento = document.getElementById('cerrar-modal-documento');
+        const btnCancelarDocumento = document.getElementById('cancelar-documento');
+        const formularioDocumento = document.getElementById('formulario-documento');
+        const tituloModalDocumento = document.getElementById('titulo-modal-documento');
+        const campoIdDocumento = document.getElementById('documento-id');
+        const campoTituloDocumento = document.getElementById('documento-titulo');
+        const campoDescripcionDocumento = document.getElementById('documento-descripcion');
+        const campoUrlDocumento = document.getElementById('documento-url');
+        const campoTipoDocumento = document.getElementById('documento-tipo');
+        const mensajeDocumento = document.getElementById('mensaje-documento');
         const mensajeError = document.getElementById('mensaje-error');
         const listaDocumentos = document.getElementById('lista-documentos');
         const tituloPanelDocumentos = document.getElementById('titulo-panel-documentos');
@@ -635,6 +776,48 @@
             estadoDocumentos.textContent = mensaje;
             estadoDocumentos.classList.toggle('visible', Boolean(mensaje));
             estadoDocumentos.classList.toggle('error', esError);
+        }
+
+        function actualizarMensajeDocumento(mensaje) {
+            mensajeDocumento.textContent = mensaje;
+            mensajeDocumento.classList.toggle('visible', Boolean(mensaje));
+        }
+
+        // Controla la visibilidad del formulario para crear o editar documentos.
+        function mostrarFormularioDocumento() {
+            capaModalDocumento.classList.add('visible');
+            capaModalDocumento.setAttribute('aria-hidden', 'false');
+            campoTituloDocumento.focus();
+        }
+
+        function ocultarFormularioDocumento() {
+            capaModalDocumento.classList.remove('visible');
+            capaModalDocumento.setAttribute('aria-hidden', 'true');
+            actualizarMensajeDocumento('');
+            formularioDocumento.reset();
+            campoIdDocumento.value = '';
+        }
+
+        function prepararFormularioNuevo() {
+            tituloModalDocumento.textContent = 'Agregar documento';
+            campoIdDocumento.value = '';
+            campoTituloDocumento.value = '';
+            campoDescripcionDocumento.value = '';
+            campoUrlDocumento.value = '';
+            campoTipoDocumento.value = tipoListaSolicitada || 'unidades';
+            actualizarMensajeDocumento('');
+            mostrarFormularioDocumento();
+        }
+
+        function prepararFormularioEdicion(documento) {
+            tituloModalDocumento.textContent = 'Editar documento';
+            campoIdDocumento.value = documento.id;
+            campoTituloDocumento.value = documento.titulo || '';
+            campoDescripcionDocumento.value = documento.descripcion || '';
+            campoUrlDocumento.value = documento.url || '';
+            campoTipoDocumento.value = documento.tipo || 'unidades';
+            actualizarMensajeDocumento('');
+            mostrarFormularioDocumento();
         }
 
 
@@ -729,11 +912,67 @@
             return Array.isArray(datos.documentos) ? datos.documentos : [];
         }
 
+        async function crearDocumento(documento) {
+            const { respuesta, datos } = await solicitarApi(
+                '/api/documentos',
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(documento)
+                },
+                'No se pudo contactar el servidor para crear el documento. Confirme que la API esté encendida.'
+            );
+
+            if (!respuesta.ok || !datos.exito) {
+                const mensaje = datos.mensaje || 'No se pudo crear el documento.';
+                throw new Error(mensaje);
+            }
+
+            return datos.documento;
+        }
+
+        async function actualizarDocumento(id, documento) {
+            const { respuesta, datos } = await solicitarApi(
+                `/api/documentos/${encodeURIComponent(id)}`,
+                {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(documento)
+                },
+                'No se pudo contactar el servidor para actualizar el documento. Confirme que la API esté encendida.'
+            );
+
+            if (!respuesta.ok || !datos.exito) {
+                const mensaje = datos.mensaje || 'No se pudo actualizar el documento.';
+                throw new Error(mensaje);
+            }
+
+            return datos.documento;
+        }
+
+        async function eliminarDocumento(id) {
+            const { respuesta, datos } = await solicitarApi(
+                `/api/documentos/${encodeURIComponent(id)}`,
+                { method: 'DELETE' },
+                'No se pudo contactar el servidor para eliminar el documento. Confirme que la API esté encendida.'
+            );
+
+            if (!respuesta.ok || !datos.exito) {
+                const mensaje = datos.mensaje || 'No se pudo eliminar el documento.';
+                throw new Error(mensaje);
+            }
+        }
+
         function renderizarDocumentos(documentos) {
             listaDocumentos.innerHTML = '';
             documentos.forEach(function(documento) {
                 const elemento = document.createElement('li');
                 elemento.className = 'item-documento';
+                elemento.dataset.id = documento.id;
+                elemento.dataset.titulo = documento.titulo || '';
+                elemento.dataset.descripcion = documento.descripcion || '';
+                elemento.dataset.url = documento.url || '';
+                elemento.dataset.tipo = documento.tipo || 'unidades';
                 elemento.innerHTML = `
                     <div class=\"vista-previa\">
                         <object data=\"${documento.url}\" type=\"application/pdf\" aria-label=\"Vista previa de ${documento.titulo}\"></object>
@@ -743,6 +982,10 @@
                         <p>${documento.descripcion || 'Documento sin descripción disponible.'}</p>
                         <a href=\"${documento.url}\" download>Descargar</a>
                         <a href=\"${documento.url}\" target=\"_blank\" rel=\"noopener\">Ver en línea</a>
+                        <div class=\"acciones-documento\">
+                            <button class=\"btn-secundario\" type=\"button\" data-accion=\"editar\">Editar</button>
+                            <button class=\"btn-secundario btn-eliminar\" type=\"button\" data-accion=\"eliminar\">Eliminar</button>
+                        </div>
                     </div>
                 `;
                 listaDocumentos.appendChild(elemento);
@@ -751,6 +994,7 @@
 
         // Muestra el cuadro con los documentos solicitados y los renderiza dinámicamente desde la base de datos.
         async function mostrarPanelDocumentos(tipoLista) {
+            tipoListaSolicitada = tipoLista;
             const esMaterialApoyo = tipoLista === 'material';
             tituloPanelDocumentos.textContent = esMaterialApoyo ? 'Material de apoyo' : 'Documentos de unidades';
             descripcionPanelDocumentos.textContent = esMaterialApoyo ? 'Vista previa y descarga en línea del material complementario.' : 'Vista previa y descarga rápida de las unidades.';
@@ -779,6 +1023,75 @@
             panelDocumentos.setAttribute('aria-hidden', 'true');
         }
 
+        // Envía el formulario para crear o actualizar documentos.
+        async function manejarEnvioDocumento(evento) {
+            evento.preventDefault();
+            const id = campoIdDocumento.value.trim();
+            const titulo = campoTituloDocumento.value.trim();
+            const descripcion = campoDescripcionDocumento.value.trim();
+            const url = campoUrlDocumento.value.trim();
+            const tipo = campoTipoDocumento.value;
+
+            if (!titulo || !url || !tipo) {
+                actualizarMensajeDocumento('Debe completar el título, la URL y el tipo del documento.');
+                return;
+            }
+
+            try {
+                const payload = { titulo, descripcion, url, tipo };
+                if (id) {
+                    await actualizarDocumento(id, payload);
+                } else {
+                    await crearDocumento(payload);
+                }
+                ocultarFormularioDocumento();
+                await mostrarPanelDocumentos(tipoListaSolicitada);
+            } catch (error) {
+                const mensaje = error?.message || 'No se pudo guardar el documento.';
+                actualizarMensajeDocumento(mensaje);
+            }
+        }
+
+        // Controla las acciones de editar o eliminar desde la lista.
+        async function manejarAccionDocumento(evento) {
+            const boton = evento.target.closest('button[data-accion]');
+            if (!boton) {
+                return;
+            }
+
+            const item = boton.closest('.item-documento');
+            if (!item) {
+                return;
+            }
+
+            const documento = {
+                id: item.dataset.id,
+                titulo: item.dataset.titulo,
+                descripcion: item.dataset.descripcion,
+                url: item.dataset.url,
+                tipo: item.dataset.tipo
+            };
+
+            if (boton.dataset.accion === 'editar') {
+                prepararFormularioEdicion(documento);
+                return;
+            }
+
+            if (boton.dataset.accion === 'eliminar') {
+                const confirmado = window.confirm('¿Desea eliminar este documento? Esta acción no se puede deshacer.');
+                if (!confirmado) {
+                    return;
+                }
+                try {
+                    await eliminarDocumento(documento.id);
+                    await mostrarPanelDocumentos(tipoListaSolicitada);
+                } catch (error) {
+                    const mensaje = error?.message || 'No se pudo eliminar el documento.';
+                    actualizarEstadoDocumentos(mensaje, true);
+                }
+            }
+        }
+
         enlacesAcceso.forEach(function(enlace) {
             enlace.addEventListener('click', mostrarModalAcceso);
         });
@@ -792,6 +1105,16 @@
         botonToggleContrasena.addEventListener('click', alternarContrasena);
         formularioAcceso.addEventListener('submit', manejarIngreso);
         btnCerrarDocumentos.addEventListener('click', ocultarPanelDocumentos);
+        btnAgregarDocumento.addEventListener('click', prepararFormularioNuevo);
+        btnCerrarModalDocumento.addEventListener('click', ocultarFormularioDocumento);
+        btnCancelarDocumento.addEventListener('click', ocultarFormularioDocumento);
+        capaModalDocumento.addEventListener('click', function(evento) {
+            if (evento.target === capaModalDocumento) {
+                ocultarFormularioDocumento();
+            }
+        });
+        formularioDocumento.addEventListener('submit', manejarEnvioDocumento);
+        listaDocumentos.addEventListener('click', manejarAccionDocumento);
     </script>
 </body>
 </html>
