@@ -770,6 +770,7 @@
         let datosUsuario = null;
         let tipoListaSolicitada = 'unidades';
         let urlDocumentoSeleccionado = '';
+        let urlsBlobDocumentos = [];
 
         // Devuelve la ruta completa hacia la API respetando el origen del servidor backend.
         function construirRutaApi(ruta) {
@@ -793,6 +794,75 @@
                 return '';
             }
             return api.endsWith('/') ? api.slice(0, -1) : api;
+        }
+
+        // Ajusta la URL del documento para que las rutas relativas apunten al backend que sirve los archivos.
+        function normalizarUrlDocumento(urlDocumento) {
+            if (!urlDocumento) {
+                return '';
+            }
+
+            if (/^(https?:|data:|blob:)/i.test(urlDocumento)) {
+                return urlDocumento;
+            }
+
+            if (!baseApi) {
+                return urlDocumento;
+            }
+
+            return urlDocumento.startsWith('/')
+                ? `${baseApi}${urlDocumento}`
+                : `${baseApi}/${urlDocumento}`;
+        }
+
+        // Convierte URLs data en blob para evitar bloqueos al abrir nuevas pestañas.
+        function obtenerUrlParaVista(urlDocumento) {
+            if (!urlDocumento) {
+                return '';
+            }
+
+            if (!urlDocumento.startsWith('data:')) {
+                return normalizarUrlDocumento(urlDocumento);
+            }
+
+            try {
+                const respuesta = fetch(urlDocumento);
+                return respuesta
+                    .then(function(resultado) {
+                        return resultado.blob();
+                    })
+                    .then(function(blob) {
+                        const urlBlob = URL.createObjectURL(blob);
+                        urlsBlobDocumentos.push(urlBlob);
+                        return urlBlob;
+                    });
+            } catch (error) {
+                return urlDocumento;
+            }
+        }
+
+        function limpiarUrlsBlobDocumentos() {
+            urlsBlobDocumentos.forEach(function(url) {
+                URL.revokeObjectURL(url);
+            });
+            urlsBlobDocumentos = [];
+        }
+
+        function obtenerNombreDescarga(documento, urlFinal) {
+            if (urlFinal && !urlFinal.startsWith('data:') && !urlFinal.startsWith('blob:')) {
+                const partesUrl = urlFinal.split('/');
+                const nombre = partesUrl[partesUrl.length - 1];
+                if (nombre) {
+                    return nombre;
+                }
+            }
+
+            const tituloBase = (documento.titulo || 'documento').trim();
+            const tituloNormalizado = tituloBase
+                .toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^\w-]/g, '');
+            return `${tituloNormalizado || 'documento'}.pdf`;
         }
 
         // Centraliza las llamadas a la API y muestra un mensaje claro cuando el servidor no responde.
@@ -1060,6 +1130,7 @@
 
         function renderizarDocumentos(documentos) {
             listaDocumentos.innerHTML = '';
+            limpiarUrlsBlobDocumentos();
             documentos.forEach(function(documento) {
                 const elemento = document.createElement('li');
                 elemento.className = 'item-documento';
@@ -1068,22 +1139,44 @@
                 elemento.dataset.descripcion = documento.descripcion || '';
                 elemento.dataset.url = documento.url || '';
                 elemento.dataset.tipo = documento.tipo || 'unidades';
-                elemento.innerHTML = `
+                const urlDocumento = documento.url || '';
+                const nombreDescarga = obtenerNombreDescarga(documento, urlDocumento);
+
+                const contenidoDocumento = `
                     <div class=\"vista-previa\">
-                        <object data=\"${documento.url}\" type=\"application/pdf\" aria-label=\"Vista previa de ${documento.titulo}\"></object>
+                        <object data=\"\" type=\"application/pdf\" aria-label=\"Vista previa de ${documento.titulo}\"></object>
                     </div>
                     <div class=\"detalle-documento\">
                         <h5>${documento.titulo}</h5>
                         <p>${documento.descripcion || 'Documento sin descripción disponible.'}</p>
-                        <a href=\"${documento.url}\" download>Descargar</a>
-                        <a href=\"${documento.url}\" target=\"_blank\" rel=\"noopener\">Ver en línea</a>
+                        <a class=\"enlace-descarga\" href=\"\" download=\"${nombreDescarga}\">Descargar</a>
+                        <a class=\"enlace-vista\" href=\"\" target=\"_blank\" rel=\"noopener\">Ver en línea</a>
                         <div class=\"acciones-documento\">
                             <button class=\"btn-secundario\" type=\"button\" data-accion=\"editar\">Editar</button>
                             <button class=\"btn-secundario btn-eliminar\" type=\"button\" data-accion=\"eliminar\">Eliminar</button>
                         </div>
                     </div>
                 `;
+
+                elemento.innerHTML = contenidoDocumento;
                 listaDocumentos.appendChild(elemento);
+
+                Promise.resolve(obtenerUrlParaVista(urlDocumento)).then(function(urlVistaPrevia) {
+                    const urlFinal = urlVistaPrevia || normalizarUrlDocumento(urlDocumento);
+                    const vista = elemento.querySelector('object');
+                    const enlaceDescarga = elemento.querySelector('.enlace-descarga');
+                    const enlaceVista = elemento.querySelector('.enlace-vista');
+                    if (vista) {
+                        vista.setAttribute('data', urlFinal);
+                    }
+                    if (enlaceDescarga) {
+                        enlaceDescarga.setAttribute('href', urlFinal);
+                        enlaceDescarga.setAttribute('download', obtenerNombreDescarga(documento, urlFinal));
+                    }
+                    if (enlaceVista) {
+                        enlaceVista.setAttribute('href', urlFinal);
+                    }
+                });
             });
         }
 
