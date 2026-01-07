@@ -305,6 +305,38 @@
             box-shadow: 0 0 0 3px rgba(245, 51, 51, 0.16);
         }
 
+        .zona-carga-documento {
+            border: 2px dashed #d3d9e4;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+            color: #555;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .zona-carga-documento.arrastrando {
+            border-color: var(--brand-red);
+            background-color: rgba(245, 51, 51, 0.08);
+        }
+
+        .zona-carga-documento p {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .zona-carga-documento .ayuda-carga {
+            display: block;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #777;
+        }
+
+        .input-archivo-oculto {
+            display: none;
+        }
+
+
         .btn-ojo {
             position: absolute;
             right: 10px;
@@ -669,15 +701,17 @@
                     </div>
                 </div>
                 <div class="grupo-campo">
-                    <label for="documento-descripcion">Descripción</label>
-                    <div class="campo-input">
-                        <textarea id="documento-descripcion" name="descripcion" placeholder="Detalle breve del contenido"></textarea>
+                    <label for="documento-archivo">Documento</label>
+                    <div class="zona-carga-documento" id="zona-carga-documento" role="button" tabindex="0">
+                        <input id="documento-archivo" name="archivo" type="file" class="input-archivo-oculto">
+                        <p id="texto-zona-documento">Arrastra un documento o haz clic aquí.</p>
+                        <span class="ayuda-carga">Formatos sugeridos: PDF, DOCX o imágenes.</span>
                     </div>
                 </div>
                 <div class="grupo-campo">
-                    <label for="documento-url">URL del documento</label>
+                    <label for="documento-descripcion">Descripción</label>
                     <div class="campo-input">
-                        <input id="documento-url" name="url" type="url" placeholder="https://dominio.com/documento.pdf" required>
+                        <textarea id="documento-descripcion" name="descripcion" placeholder="Detalle breve del contenido"></textarea>
                     </div>
                 </div>
                 <div class="grupo-campo">
@@ -717,7 +751,9 @@
         const campoIdDocumento = document.getElementById('documento-id');
         const campoTituloDocumento = document.getElementById('documento-titulo');
         const campoDescripcionDocumento = document.getElementById('documento-descripcion');
-        const campoUrlDocumento = document.getElementById('documento-url');
+        const zonaCargaDocumento = document.getElementById('zona-carga-documento');
+        const campoArchivoDocumento = document.getElementById('documento-archivo');
+        const textoZonaDocumento = document.getElementById('texto-zona-documento');
         const campoTipoDocumento = document.getElementById('documento-tipo');
         const mensajeDocumento = document.getElementById('mensaje-documento');
         const mensajeError = document.getElementById('mensaje-error');
@@ -733,6 +769,7 @@
         let usuarioAutenticado = false;
         let datosUsuario = null;
         let tipoListaSolicitada = 'unidades';
+        let urlDocumentoSeleccionado = '';
 
         // Devuelve la ruta completa hacia la API respetando el origen del servidor backend.
         function construirRutaApi(ruta) {
@@ -783,6 +820,56 @@
             mensajeDocumento.classList.toggle('visible', Boolean(mensaje));
         }
 
+        function actualizarTextoZonaDocumento(texto) {
+            textoZonaDocumento.textContent = texto;
+        }
+
+        function obtenerNombreDocumentoDesdeUrl(url) {
+            if (!url) {
+                return '';
+            }
+
+            if (url.startsWith('data:')) {
+                return 'Documento cargado previamente';
+            }
+
+            try {
+                const urlParseada = new URL(url);
+                const partesRuta = urlParseada.pathname.split('/');
+                return partesRuta[partesRuta.length - 1] || 'Documento cargado previamente';
+            } catch (error) {
+                const partesRuta = url.split('/');
+                return partesRuta[partesRuta.length - 1] || 'Documento cargado previamente';
+            }
+        }
+
+        function limpiarArchivoDocumento() {
+            urlDocumentoSeleccionado = '';
+            campoArchivoDocumento.value = '';
+            actualizarTextoZonaDocumento('Arrastra un documento o haz clic aquí.');
+        }
+
+        function procesarArchivoDocumento(archivo) {
+            if (!archivo) {
+                limpiarArchivoDocumento();
+                return;
+            }
+
+            // Leemos el archivo para convertirlo en una URL base64 y guardarlo en la base de datos.
+            const lector = new FileReader();
+            lector.onload = function() {
+                urlDocumentoSeleccionado = lector.result || '';
+                actualizarTextoZonaDocumento(`Archivo seleccionado: ${archivo.name}`);
+                actualizarMensajeDocumento('');
+            };
+            lector.onerror = function() {
+                actualizarMensajeDocumento('No se pudo leer el archivo seleccionado.');
+                limpiarArchivoDocumento();
+            };
+            lector.readAsDataURL(archivo);
+        }
+
+
         // Controla la visibilidad del formulario para crear o editar documentos.
         function mostrarFormularioDocumento() {
             capaModalDocumento.classList.add('visible');
@@ -796,6 +883,7 @@
             actualizarMensajeDocumento('');
             formularioDocumento.reset();
             campoIdDocumento.value = '';
+            limpiarArchivoDocumento();
         }
 
         function prepararFormularioNuevo() {
@@ -803,9 +891,9 @@
             campoIdDocumento.value = '';
             campoTituloDocumento.value = '';
             campoDescripcionDocumento.value = '';
-            campoUrlDocumento.value = '';
             campoTipoDocumento.value = tipoListaSolicitada || 'unidades';
             actualizarMensajeDocumento('');
+            limpiarArchivoDocumento();
             mostrarFormularioDocumento();
         }
 
@@ -814,7 +902,14 @@
             campoIdDocumento.value = documento.id;
             campoTituloDocumento.value = documento.titulo || '';
             campoDescripcionDocumento.value = documento.descripcion || '';
-            campoUrlDocumento.value = documento.url || '';
+            urlDocumentoSeleccionado = documento.url || '';
+            campoArchivoDocumento.value = '';
+            const nombreDocumento = obtenerNombreDocumentoDesdeUrl(urlDocumentoSeleccionado);
+            if (nombreDocumento) {
+                actualizarTextoZonaDocumento(`Documento actual: ${nombreDocumento}`);
+            } else {
+                actualizarTextoZonaDocumento('Arrastra un documento o haz clic aquí.');
+            }
             campoTipoDocumento.value = documento.tipo || 'unidades';
             actualizarMensajeDocumento('');
             mostrarFormularioDocumento();
@@ -1029,11 +1124,11 @@
             const id = campoIdDocumento.value.trim();
             const titulo = campoTituloDocumento.value.trim();
             const descripcion = campoDescripcionDocumento.value.trim();
-            const url = campoUrlDocumento.value.trim();
+            const url = (urlDocumentoSeleccionado || '').trim();
             const tipo = campoTipoDocumento.value;
 
             if (!titulo || !url || !tipo) {
-                actualizarMensajeDocumento('Debe completar el título, la URL y el tipo del documento.');
+                actualizarMensajeDocumento('Debe completar el título, el documento y el tipo.');
                 return;
             }
 
@@ -1115,6 +1210,38 @@
         });
         formularioDocumento.addEventListener('submit', manejarEnvioDocumento);
         listaDocumentos.addEventListener('click', manejarAccionDocumento);
+        campoArchivoDocumento.addEventListener('change', function(evento) {
+            const archivo = evento.target.files[0];
+            procesarArchivoDocumento(archivo);
+        });
+
+        zonaCargaDocumento.addEventListener('click', function() {
+            campoArchivoDocumento.click();
+        });
+
+        zonaCargaDocumento.addEventListener('keydown', function(evento) {
+            if (evento.key === 'Enter' || evento.key === ' ') {
+                evento.preventDefault();
+                campoArchivoDocumento.click();
+            }
+        });
+
+        // Controla el arrastre de archivos sobre la bandeja.
+        zonaCargaDocumento.addEventListener('dragover', function(evento) {
+            evento.preventDefault();
+            zonaCargaDocumento.classList.add('arrastrando');
+        });
+
+        zonaCargaDocumento.addEventListener('dragleave', function() {
+            zonaCargaDocumento.classList.remove('arrastrando');
+        });
+
+        zonaCargaDocumento.addEventListener('drop', function(evento) {
+            evento.preventDefault();
+            zonaCargaDocumento.classList.remove('arrastrando');
+            const archivo = evento.dataTransfer.files[0];
+            procesarArchivoDocumento(archivo);
+        });
     </script>
 </body>
 </html>
