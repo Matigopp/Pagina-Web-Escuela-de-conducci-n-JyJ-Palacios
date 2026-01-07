@@ -27,7 +27,8 @@ app.use(express.static(path.join(__dirname)));
 
 /**
  * Obtiene los documentos almacenados en la base de datos filtrando por tipo si corresponde.
- * Se espera que la tabla documentos contenga las columnas: id, titulo_documento, descripcion, url y tipo_documento.
+ * Se mapea la estructura de la API (id, titulo, descripcion, url, tipo) a la tabla documentos:
+ * id_documento, titulo_documento, descripcion_documento, documento, tipo_documento.
  */
 app.get('/api/documentos', async (solicitud, respuesta) => {
     const tipo = solicitud.query.tipo || 'unidades';
@@ -35,10 +36,14 @@ app.get('/api/documentos', async (solicitud, respuesta) => {
 
     try {
         const consulta = `
-            SELECT id, titulo, descripcion, url, tipo
+            SELECT id_documento AS id,
+                   titulo_documento AS titulo,
+                   descripcion_documento AS descripcion,
+                   documento AS url,
+                   tipo_documento AS tipo
             FROM documentos
-            WHERE ($1::text IS NULL OR tipo = $1)
-            ORDER BY titulo ASC
+            WHERE ($1::text IS NULL OR tipo_documento = $1)
+            ORDER BY titulo_documento ASC
         `;
         const { rows } = await pool.query(consulta, [tipo]);
         respuesta.json({ exito: true, documentos: rows });
@@ -55,6 +60,7 @@ app.get('/api/documentos', async (solicitud, respuesta) => {
 
 /**
  * Registra un documento en la base de datos.
+ * documento corresponde al archivo en sí (ruta, URL o base64) enviado desde el formulario.
  */
 app.post('/api/documentos', async (solicitud, respuesta) => {
     const { titulo, descripcion, url, tipo } = solicitud.body || {};
@@ -69,9 +75,13 @@ app.post('/api/documentos', async (solicitud, respuesta) => {
 
     try {
         const consulta = `
-            INSERT INTO documentos (titulo, descripcion, url, tipo)
+            INSERT INTO documentos (titulo_documento, descripcion_documento, documento, tipo_documento)
             VALUES ($1, $2, $3, $4)
-            RETURNING id, titulo, descripcion, url, tipo
+            RETURNING id_documento AS id,
+                      titulo_documento AS titulo,
+                      descripcion_documento AS descripcion,
+                      documento AS url,
+                      tipo_documento AS tipo
         `;
         const { rows } = await pool.query(consulta, [titulo, descripcion || null, url, tipo]);
         respuesta.status(201).json({ exito: true, documento: rows[0] });
@@ -103,12 +113,16 @@ app.put('/api/documentos/:id', async (solicitud, respuesta) => {
     try {
         const consulta = `
             UPDATE documentos
-            SET titulo = $1,
-                descripcion = $2,
-                url = $3,
-                tipo = $4
-            WHERE id = $5
-            RETURNING id, titulo, descripcion, url, tipo
+            SET titulo_documento = $1,
+                descripcion_documento = $2,
+                documento = $3,
+                tipo_documento = $4
+            WHERE id_documento = $5
+            RETURNING id_documento AS id,
+                      titulo_documento AS titulo,
+                      descripcion_documento AS descripcion,
+                      documento AS url,
+                      tipo_documento AS tipo
         `;
         const { rows } = await pool.query(consulta, [titulo, descripcion || null, url, tipo, id]);
 
@@ -147,8 +161,8 @@ app.delete('/api/documentos/:id', async (solicitud, respuesta) => {
     try {
         const consulta = `
             DELETE FROM documentos
-            WHERE id = $1
-            RETURNING id
+            WHERE id_documento = $1
+            RETURNING id_documento AS id
         `;
         const { rows } = await pool.query(consulta, [id]);
 
