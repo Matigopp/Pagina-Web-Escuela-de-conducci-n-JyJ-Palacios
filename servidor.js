@@ -5,7 +5,9 @@ const { obtenerPool, probarConexion } = require('./configuracion/conexionBaseDat
 const app = express();
 const puerto = Number(process.env.PUERTO_APP) || 3000;
 
-app.use(express.json());
+// Aumenta el límite del cuerpo para permitir documentos en base64 o JSON extensos.
+app.use(express.json({ limit: process.env.LIMITE_CUERPO_JSON || '20mb' }));
+app.use(express.urlencoded({ limit: process.env.LIMITE_CUERPO_URL || '20mb', extended: true }));
 
 // Habilita CORS simple para permitir llamadas desde orígenes como Live Server (puerto 5500).
 app.use((solicitud, respuesta, siguiente) => {
@@ -25,7 +27,7 @@ app.use(express.static(path.join(__dirname)));
 
 /**
  * Obtiene los documentos almacenados en la base de datos filtrando por tipo si corresponde.
- * Se espera que la tabla documentos contenga las columnas: id, titulo, descripcion, url y tipo.
+ * Se espera que la tabla documentos contenga las columnas: id, titulo_documento, descripcion, url y tipo_documento.
  */
 app.get('/api/documentos', async (solicitud, respuesta) => {
     const tipo = solicitud.query.tipo || 'unidades';
