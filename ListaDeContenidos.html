@@ -24,6 +24,10 @@
             background-color: var(--brand-white);
         }
 
+        body.sin-scroll {
+            overflow: hidden;
+        }
+
         header {
             background-color: var(--brand-red);
             padding: 1rem 2rem;
@@ -819,6 +823,18 @@
         let urlDocumentoSeleccionado = '';
         let urlsBlobDocumentos = [];
 
+        // Bloquea el desplazamiento del fondo mientras haya un modal o panel abierto.
+        function actualizarEstadoScroll() {
+            const modalAccesoVisible = capaModal.classList.contains('visible');
+            const modalDocumentoVisible = capaModalDocumento.classList.contains('visible');
+            const panelVisible = panelDocumentos.classList.contains('visible');
+            if (modalAccesoVisible || modalDocumentoVisible || panelVisible) {
+                document.body.classList.add('sin-scroll');
+                return;
+            }
+            document.body.classList.remove('sin-scroll');
+        }
+
         // Devuelve la ruta completa hacia la API respetando el origen del servidor backend.
         function construirRutaApi(ruta) {
             return `${baseApi}${ruta}`;
@@ -1024,6 +1040,7 @@
             capaModalDocumento.classList.add('visible');
             capaModalDocumento.setAttribute('aria-hidden', 'false');
             campoTituloDocumento.focus();
+            actualizarEstadoScroll();
         }
 
         function ocultarFormularioDocumento() {
@@ -1033,6 +1050,7 @@
             formularioDocumento.reset();
             campoIdDocumento.value = '';
             limpiarArchivoDocumento();
+            actualizarEstadoScroll();
         }
 
         function prepararFormularioNuevo() {
@@ -1077,6 +1095,7 @@
             capaModal.classList.add('visible');
             capaModal.setAttribute('aria-hidden', 'false');
             document.getElementById('campo-correo').focus();
+            actualizarEstadoScroll();
         }
 
         // Oculta el formulario de acceso.
@@ -1086,6 +1105,7 @@
             capaModal.setAttribute('aria-hidden', 'true');
             mensajeError.classList.remove('visible');
             mensajeError.textContent = '';
+            actualizarEstadoScroll();
         }
 
         // Alterna la visibilidad de la contraseña.
@@ -1271,6 +1291,7 @@
             listaDocumentos.innerHTML = '';
             panelDocumentos.classList.add('visible');
             panelDocumentos.setAttribute('aria-hidden', 'false');
+            actualizarEstadoScroll();
 
             try {
                 const documentos = await obtenerDocumentosPorTipo(tipoLista);
@@ -1290,6 +1311,7 @@
         function ocultarPanelDocumentos() {
             panelDocumentos.classList.remove('visible');
             panelDocumentos.setAttribute('aria-hidden', 'true');
+            actualizarEstadoScroll();
         }
 
         // Envía el formulario para crear o actualizar documentos.
