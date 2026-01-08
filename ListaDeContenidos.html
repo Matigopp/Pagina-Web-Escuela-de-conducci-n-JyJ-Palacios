@@ -146,6 +146,15 @@
             background-position: center;
         }
 
+        /* Ajuste específico para evitar el recorte del libro en esta tarjeta */
+        .card-image-libro {
+            height: 220px;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #6ea2c4;
+        }
+
         .card-body {
             padding: 20px;
         }
@@ -621,7 +630,7 @@
                 </div>
             </div>
             <div class="content-card">
-                 <div class="card-image" style="background-image: url('images/libro-para-conductores.jpg');"></div>
+                 <div class="card-image card-image-libro" style="background-image: url('images/libro-para-conductores.jpg');"></div>
                 <div class="card-body">
                     <h3>Libro nuevo conductor</h3>
                     <p>Evaluaciones cortas para medir tu avance antes de las sesiones prácticas y el examen oficial.</p>
