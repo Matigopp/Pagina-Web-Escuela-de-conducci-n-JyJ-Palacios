@@ -5,6 +5,75 @@ const { obtenerPool, probarConexion } = require('./configuracion/conexionBaseDat
 const app = express();
 const puerto = Number(process.env.PUERTO_APP) || 3000;
 
+/**
+ * Obtiene las columnas disponibles en la tabla usuarios para mantener compatibilidad
+ * con diferentes versiones del esquema.
+ */
+async function obtenerColumnasUsuarios(pool) {
+    const consulta = `
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name = 'usuarios'
+    `;
+    const { rows } = await pool.query(consulta);
+    return new Set(rows.map((fila) => fila.column_name));
+}
+
+/**
+ * Asegura la columna nombre y la restricción que impide números en el nombre.
+ */
+async function asegurarColumnaNombre(pool) {
+    const columnas = await obtenerColumnasUsuarios(pool);
+
+    if (!columnas.has('nombre')) {
+        await pool.query('ALTER TABLE usuarios ADD COLUMN nombre TEXT');
+
+        if (columnas.has('nombre_completo')) {
+            await pool.query('UPDATE usuarios SET nombre = nombre_completo WHERE nombre IS NULL');
+        } else if (columnas.has('usuario')) {
+            await pool.query('UPDATE usuarios SET nombre = usuario WHERE nombre IS NULL');
+        }
+    }
+
+    const restriccion = await pool.query(`
+        SELECT constraint_name
+        FROM information_schema.table_constraints
+        WHERE table_name = 'usuarios'
+          AND constraint_name = 'usuarios_nombre_solo_texto'
+    `);
+
+    if (restriccion.rows.length === 0) {
+        await pool.query(`
+            ALTER TABLE usuarios
+            ADD CONSTRAINT usuarios_nombre_solo_texto
+            CHECK (nombre !~ '[0-9]')
+        `);
+    }
+}
+
+/**
+ * Define el mapeo de columnas esperadas según el esquema disponible.
+ */
+async function obtenerMapaUsuarios(pool) {
+    const columnas = await obtenerColumnasUsuarios(pool);
+
+    return {
+        columnaId: columnas.has('id_usuario') ? 'id_usuario' : 'id',
+        columnaNombre: columnas.has('nombre')
+            ? 'nombre'
+            : columnas.has('nombre_completo')
+                ? 'nombre_completo'
+                : 'usuario',
+        columnaCorreo: columnas.has('correo') ? 'correo' : columnas.has('usuario') ? 'usuario' : null,
+        columnaRol: columnas.has('rol') ? 'rol' : null,
+        columnaContrasena: columnas.has('contrasena') ? 'contrasena' : 'password_hash'
+    };
+}
+
+function nombreContieneNumeros(nombre) {
+    return /[0-9]/.test(nombre);
+}
+
 // Aumenta el límite del cuerpo para permitir documentos en base64 o JSON extensos.
 app.use(express.json({ limit: process.env.LIMITE_CUERPO_JSON || '20mb' }));
 app.use(express.urlencoded({ limit: process.env.LIMITE_CUERPO_URL || '20mb', extended: true }));
@@ -24,6 +93,11 @@ app.use((solicitud, respuesta, siguiente) => {
 
 // Sirve los archivos estáticos existentes para mantener la página disponible.
 app.use(express.static(path.join(__dirname)));
+
+asegurarColumnaNombre(obtenerPool()).catch((error) => {
+    console.error('No se pudo preparar la columna nombre en usuarios:', error);
+});
+
 
 /**
  * Obtiene los documentos almacenados en la base de datos filtrando por tipo si corresponde.
@@ -192,13 +266,19 @@ app.get('/api/usuarios', async (_solicitud, respuesta) => {
     const pool = obtenerPool();
 
     try {
+        const {
+            columnaId,
+            columnaNombre,
+            columnaCorreo,
+            columnaRol
+        } = await obtenerMapaUsuarios(pool);
         const consulta = `
-            SELECT id_usuario AS id,
-                   nombre_completo AS nombre,
-                   correo,
-                   rol
+            SELECT ${columnaId} AS id,
+                   ${columnaNombre} AS nombre,
+                   ${columnaCorreo ? `${columnaCorreo} AS correo` : "NULL::text AS correo"},
+                   ${columnaRol ? `${columnaRol} AS rol` : "'usuario'::text AS rol"}
             FROM usuarios
-            ORDER BY nombre_completo ASC
+            ORDER BY ${columnaNombre} ASC
         `;
         const { rows } = await pool.query(consulta);
         respuesta.json({ exito: true, usuarios: rows });
@@ -226,17 +306,38 @@ app.post('/api/usuarios', async (solicitud, respuesta) => {
         });
     }
 
+    if (nombreContieneNumeros(nombre)) {
+        return respuesta.status(400).json({
+            exito: false,
+            mensaje: 'El nombre no puede contener números.'
+        });
+    }
+
     try {
+        const {
+            columnaId,
+            columnaNombre,
+            columnaCorreo,
+            columnaRol
+        } = await obtenerMapaUsuarios(pool);
+
+        const columnaCorreoUsada = columnaCorreo || 'correo';
         const consulta = `
-            INSERT INTO usuarios (nombre_completo, correo, contrasena, rol)
+            INSERT INTO usuarios (${columnaNombre}, ${columnaCorreoUsada}, contrasena, rol)
             VALUES ($1, $2, $3, $4)
-            RETURNING id_usuario AS id,
-                      nombre_completo AS nombre,
-                      correo,
-                      rol
+            RETURNING ${columnaId} AS id,
+                      ${columnaNombre} AS nombre,
+                      ${columnaCorreoUsada} AS correo,
+                      ${columnaRol ? `${columnaRol} AS rol` : "'usuario'::text AS rol"}
         `;
         const { rows } = await pool.query(consulta, [nombre, correo, contrasena, rol || 'usuario']);
-        respuesta.status(201).json({ exito: true, usuario: rows[0] });
+        respuesta.status(201).json({
+            exito: true,
+            usuario: {
+                ...rows[0],
+                rol: rows[0]?.rol || rol || 'usuario'
+            }
+        });
     } catch (error) {
         console.error('Error al crear usuario:', error);
         respuesta.status(500).json({
@@ -263,18 +364,33 @@ app.put('/api/usuarios/:id', async (solicitud, respuesta) => {
         });
     }
 
+    if (nombreContieneNumeros(nombre)) {
+        return respuesta.status(400).json({
+            exito: false,
+            mensaje: 'El nombre no puede contener números.'
+        });
+    }
+
     try {
+        const {
+            columnaId,
+            columnaNombre,
+            columnaCorreo,
+            columnaRol
+        } = await obtenerMapaUsuarios(pool);
+
+        const columnaCorreoUsada = columnaCorreo || 'correo';
         const consulta = `
             UPDATE usuarios
-            SET nombre_completo = $1,
-                correo = $2,
+            SET ${columnaNombre} = $1,
+                ${columnaCorreoUsada} = $2,
                 contrasena = COALESCE($3, contrasena),
                 rol = $4
-            WHERE id_usuario = $5
-            RETURNING id_usuario AS id,
-                      nombre_completo AS nombre,
-                      correo,
-                      rol
+            WHERE ${columnaId} = $5
+            RETURNING ${columnaId} AS id,
+                      ${columnaNombre} AS nombre,
+                      ${columnaCorreoUsada} AS correo,
+                      ${columnaRol ? `${columnaRol} AS rol` : "'usuario'::text AS rol"}
         `;
         const { rows } = await pool.query(consulta, [nombre, correo, contrasena || null, rol || 'usuario', id]);
 
@@ -311,10 +427,11 @@ app.delete('/api/usuarios/:id', async (solicitud, respuesta) => {
     }
 
     try {
+        const { columnaId } = await obtenerMapaUsuarios(pool);
         const consulta = `
             DELETE FROM usuarios
-            WHERE id_usuario = $1
-            RETURNING id_usuario AS id
+            WHERE ${columnaId} = $1
+            RETURNING ${columnaId} AS id
         `;
         const { rows } = await pool.query(consulta, [id]);
 
@@ -376,11 +493,18 @@ app.post('/api/autenticacion', async (solicitud, respuesta) => {
     }
 
     try {
+        const { columnaCorreo, columnaContrasena } = await obtenerMapaUsuarios(pool);
+        if (!columnaCorreo) {
+            return respuesta.status(500).json({
+                exito: false,
+                mensaje: 'No se encontró una columna de correo para validar credenciales.'
+            });
+        }
         // Obtiene el registro y usa la clave almacenada sin asumir un nombre de columna específico.
         const consulta = `
             SELECT *
             FROM usuarios
-            WHERE correo = $1
+            WHERE ${columnaCorreo} = $1
             LIMIT 1
         `;
         const { rows } = await pool.query(consulta, [correo]);
@@ -392,7 +516,7 @@ app.post('/api/autenticacion', async (solicitud, respuesta) => {
         }
 
         const usuario = rows[0];
-        const claveRegistrada = usuario.contrasena ?? usuario.password_hash;
+        const claveRegistrada = usuario[columnaContrasena] ?? usuario.contrasena ?? usuario.password_hash;
 
         if (!claveRegistrada || claveRegistrada !== contrasena) {
             return respuesta.status(401).json({

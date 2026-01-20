@@ -310,7 +310,7 @@
                 <input type="hidden" id="usuario-id">
                 <div class="grupo-campo">
                     <label for="usuario-nombre">Nombre completo</label>
-                    <input id="usuario-nombre" name="nombre" type="text" required>
+                    <input id="usuario-nombre" name="nombre" type="text" required pattern="[^0-9]*" title="El nombre no debe contener números">
                 </div>
                 <div class="grupo-campo">
                     <label for="usuario-correo">Correo</label>
@@ -605,6 +605,11 @@
 
             if (!nombre || !correo) {
                 actualizarMensajeFormulario('Debe completar el nombre y el correo.', true);
+                return;
+            }
+            
+            if (/\d/.test(nombre)) {
+                actualizarMensajeFormulario('El nombre no puede contener números.', true);
                 return;
             }
 
