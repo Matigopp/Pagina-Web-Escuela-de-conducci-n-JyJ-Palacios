@@ -330,6 +330,12 @@
     </div>
 
     <script>
+        const origenActual = window.location.origin;
+        const esArchivoLocal = origenActual === 'null';
+        // Si se abre esta vista directamente, se redirige al inicio para mantener la navegación desde index.html.
+        if (!esArchivoLocal && (!document.referrer || !document.referrer.startsWith(origenActual))) {
+            window.location.href = 'index.html';
+        }
         const botonCrearUsuario = document.getElementById('btn-crear-usuario');
         const capaModalUsuario = document.getElementById('capa-modal-usuario');
         const formularioUsuario = document.getElementById('formulario-usuario');
@@ -343,7 +349,6 @@
         const mensajeFormulario = document.getElementById('mensaje-formulario');
         const botonCancelar = document.getElementById('btn-cancelar');
         const enlaceGestionUsuarios = document.getElementById('enlace-gestion-usuarios');
-        const origenActual = window.location.origin;
         const parametrosBusqueda = new URLSearchParams(window.location.search);
         const apiPersonalizada = parametrosBusqueda.get('api');
         const esLiveServer = origenActual.includes('127.0.0.1:5500') || origenActual.includes('localhost:5500');

@@ -261,6 +261,13 @@
         <p>© 2024 Escuela de Conductores J&J Palacios SPA Autorizados por el ministerio.</p>
     </footer>
     <script>
+        const origenActual = window.location.origin;
+        const esArchivoLocal = origenActual === 'null';
+        // Si se abre esta vista directamente, se redirige al inicio para mantener la navegación desde index.html.
+        if (!esArchivoLocal && (!document.referrer || !document.referrer.startsWith(origenActual))) {
+            window.location.href = 'index.html';
+        }
+        
         const enlaceGestionUsuarios = document.getElementById('enlace-gestion-usuarios');
         const claveDatosUsuario = 'usuario_datos';
         const correoAdmin = 'admin@gmail.com';

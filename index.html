@@ -407,7 +407,7 @@
             <a href="Contacto.html">Contacto</a>
             <a href="Usuarios.html" class="enlace-admin" id="enlace-gestion-usuarios">Gestión usuarios</a>
         </nav>
-        <a href="ListaDeContenidos.html" class="btn-login">Contenido Alumnos</a>
+        <a href="ListaDeContenidos.html?iniciarSesion=true" class="btn-login">Iniciar sesión</a>
     </header>
 
     <section class="hero">
@@ -501,6 +501,10 @@
             const fondosHero = document.querySelectorAll('.hero-fondo');
             const controlesHero = document.querySelectorAll('.control-hero');
             let indiceActual = 0;
+
+            // Reinicia la sesión al abrir el sitio para garantizar que el acceso parta sin usuario autenticado.
+            sessionStorage.removeItem('usuario_autenticado');
+            sessionStorage.removeItem(claveDatosUsuario);
 
             // Lee el correo guardado en la sesión para mostrar el acceso solo al administrador.
             function obtenerCorreoSesion() {

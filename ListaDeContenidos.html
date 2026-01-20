@@ -655,7 +655,7 @@
             <a href="Contacto.html">Contacto</a>
             <a href="Usuarios.html" class="enlace-admin" id="enlace-gestion-usuarios">Gestión usuarios</a>
         </nav>
-        <a href="CursosDisponibles.html" class="btn-login">Volver a cursos</a>
+        <a href="#" class="btn-login" data-modal-acceso="true" data-lista="unidades">Iniciar sesión</a>
     </header>
 
     <section class="hero">
@@ -797,6 +797,12 @@
 
     <script>
         // Este script intercepta los clics de acceso para mostrar el modal y permite cerrarlo o alternar la visibilidad de la contraseña.
+        const origenActual = window.location.origin;
+        const esArchivoLocal = origenActual === 'null';
+        // Si se abre esta vista directamente, se redirige al inicio para mantener el acceso desde index.html.
+        if (!esArchivoLocal && (!document.referrer || !document.referrer.startsWith(origenActual))) {
+            window.location.href = 'index.html';
+        }
         const capaModal = document.getElementById('capa-modal');
         const enlacesAcceso = document.querySelectorAll('[data-modal-acceso="true"]');
         const btnCerrarModal = document.getElementById('cerrar-modal');
@@ -826,7 +832,6 @@
         const estadoDocumentos = document.getElementById('estado-documentos');
         const btnCerrarSesion = document.getElementById('btn-cerrar-sesion');
         const enlaceGestionUsuarios = document.getElementById('enlace-gestion-usuarios');
-        const origenActual = window.location.origin;
         const parametrosBusqueda = new URLSearchParams(window.location.search);
         const apiPersonalizada = parametrosBusqueda.get('api');
         const esLiveServer = origenActual.includes('127.0.0.1:5500') || origenActual.includes('localhost:5500');
@@ -1113,10 +1118,8 @@
         }
 
 
-        // Muestra el modal de acceso si aún no se ha autenticado el usuario.
-        function mostrarModalAcceso(evento) {
-            evento.preventDefault();
-            const tipoSolicitado = evento.currentTarget.dataset.lista || 'unidades';
+        // Abre el modal de acceso usando la misma lógica de autenticación centralizada.
+        function abrirModalAccesoDirecto(tipoSolicitado = 'unidades') {
             tipoListaSolicitada = tipoSolicitado;
             if (usuarioAutenticado) {
                 mostrarPanelDocumentos(tipoListaSolicitada);
@@ -1126,6 +1129,13 @@
             capaModal.setAttribute('aria-hidden', 'false');
             document.getElementById('campo-correo').focus();
             actualizarEstadoScroll();
+        }
+
+        // Muestra el modal de acceso si aún no se ha autenticado el usuario.
+        function mostrarModalAcceso(evento) {
+            evento.preventDefault();
+            const tipoSolicitado = evento.currentTarget.dataset.lista || 'unidades';
+            abrirModalAccesoDirecto(tipoSolicitado);
         }
 
         // Oculta el formulario de acceso.
@@ -1418,7 +1428,16 @@
             enlace.addEventListener('click', mostrarModalAcceso);
         });
 
+        // Si se solicita el inicio de sesión desde otro botón, abre el modal automáticamente.
+        function revisarInicioSesionPorParametro() {
+            const inicioSesion = parametrosBusqueda.get('iniciarSesion');
+            if (inicioSesion === 'true') {
+                abrirModalAccesoDirecto('unidades');
+            }
+        }
+
         cargarSesionUsuario();
+        revisarInicioSesionPorParametro();
         btnCerrarModal.addEventListener('click', ocultarModalAcceso);
         capaModal.addEventListener('click', function(evento) {
             if (evento.target === capaModal) {
