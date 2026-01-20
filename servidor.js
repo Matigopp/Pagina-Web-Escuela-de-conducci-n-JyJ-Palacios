@@ -52,6 +52,28 @@ async function asegurarColumnaNombre(pool) {
 }
 
 /**
+ * Asegura que la columna de ID tenga una secuencia asociada para autoincrementar.
+ * Se crea la secuencia si no existe y se sincroniza con el máximo ID registrado.
+ */
+async function asegurarSecuenciaUsuarios(pool) {
+    const { columnaId } = await obtenerMapaUsuarios(pool);
+    const nombreSecuencia = `usuarios_${columnaId}_seq`;
+
+    await pool.query(`CREATE SEQUENCE IF NOT EXISTS ${nombreSecuencia}`);
+    await pool.query(`
+        ALTER TABLE usuarios
+        ALTER COLUMN ${columnaId}
+        SET DEFAULT nextval('${nombreSecuencia}')
+    `);
+    await pool.query(`
+        SELECT setval(
+            '${nombreSecuencia}',
+            COALESCE((SELECT MAX(${columnaId}) FROM usuarios), 0)
+        )
+    `);
+}
+
+/**
  * Define el mapeo de columnas esperadas según el esquema disponible.
  */
 async function obtenerMapaUsuarios(pool) {
@@ -95,6 +117,9 @@ app.use(express.static(path.join(__dirname)));
 
 asegurarColumnaNombre(obtenerPool()).catch((error) => {
     console.error('No se pudo preparar la columna nombre en usuarios:', error);
+});
+asegurarSecuenciaUsuarios(obtenerPool()).catch((error) => {
+    console.error('No se pudo preparar la secuencia de usuarios:', error);
 });
 
 
@@ -417,21 +442,47 @@ app.delete('/api/usuarios/:id', async (solicitud, respuesta) => {
 
     try {
         const { columnaId } = await obtenerMapaUsuarios(pool);
-        const consulta = `
-            DELETE FROM usuarios
-            WHERE ${columnaId} = $1
-            RETURNING ${columnaId} AS id
-        `;
-        const { rows } = await pool.query(consulta, [id]);
+        const nombreSecuencia = `usuarios_${columnaId}_seq`;
+        const cliente = await pool.connect();
 
-        if (rows.length === 0) {
-            return respuesta.status(404).json({
-                exito: false,
-                mensaje: 'No se encontró el usuario solicitado.'
-            });
+        try {
+            await cliente.query('BEGIN');
+            const consulta = `
+                DELETE FROM usuarios
+                WHERE ${columnaId} = $1
+                RETURNING ${columnaId} AS id
+            `;
+            const { rows } = await cliente.query(consulta, [id]);
+
+            if (rows.length === 0) {
+                await cliente.query('ROLLBACK');
+                return respuesta.status(404).json({
+                    exito: false,
+                    mensaje: 'No se encontró el usuario solicitado.'
+                });
+            }
+
+        // Mantiene la numeración continua al compactar IDs posteriores al eliminado.
+            await cliente.query(`
+                UPDATE usuarios
+                SET ${columnaId} = ${columnaId} - 1
+                WHERE ${columnaId} > $1
+            `, [id]);
+            await cliente.query(`
+                SELECT setval(
+                    '${nombreSecuencia}',
+                    COALESCE((SELECT MAX(${columnaId}) FROM usuarios), 0)
+                )
+            `);
+            await cliente.query('COMMIT');
+            respuesta.json({ exito: true });
+        } catch (error) {
+            await cliente.query('ROLLBACK');
+            throw error;
+        } finally {
+            cliente.release();
         }
 
-        respuesta.json({ exito: true });
     } catch (error) {
         console.error('Error al eliminar usuario:', error);
         respuesta.status(500).json({
