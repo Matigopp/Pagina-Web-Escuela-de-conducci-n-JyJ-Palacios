@@ -65,7 +65,6 @@ async function obtenerMapaUsuarios(pool) {
                 ? 'nombre_completo'
                 : 'usuario',
         columnaCorreo: columnas.has('correo') ? 'correo' : columnas.has('usuario') ? 'usuario' : null,
-        columnaRol: columnas.has('rol') ? 'rol' : null,
         columnaContrasena: columnas.has('contrasena') ? 'contrasena' : 'password_hash'
     };
 }
@@ -260,7 +259,7 @@ app.delete('/api/documentos/:id', async (solicitud, respuesta) => {
 
 /**
  * Obtiene todos los usuarios registrados.
- * Se asume la tabla usuarios con columnas: id_usuario, nombre_completo, correo, contrasena, rol.
+ * Se asume la tabla usuarios con columnas: id_usuario, nombre_completo, correo, contraseña
  */
 app.get('/api/usuarios', async (_solicitud, respuesta) => {
     const pool = obtenerPool();
@@ -269,14 +268,12 @@ app.get('/api/usuarios', async (_solicitud, respuesta) => {
         const {
             columnaId,
             columnaNombre,
-            columnaCorreo,
-            columnaRol
+            columnaCorreo
         } = await obtenerMapaUsuarios(pool);
         const consulta = `
             SELECT ${columnaId} AS id,
                    ${columnaNombre} AS nombre,
-                   ${columnaCorreo ? `${columnaCorreo} AS correo` : "NULL::text AS correo"},
-                   ${columnaRol ? `${columnaRol} AS rol` : "'usuario'::text AS rol"}
+                   ${columnaCorreo ? `${columnaCorreo} AS correo` : "NULL::text AS correo"}
             FROM usuarios
             ORDER BY ${columnaNombre} ASC
         `;
@@ -296,7 +293,7 @@ app.get('/api/usuarios', async (_solicitud, respuesta) => {
  * Registra un usuario en la base de datos.
  */
 app.post('/api/usuarios', async (solicitud, respuesta) => {
-    const { nombre, correo, contrasena, rol } = solicitud.body || {};
+    const { nombre, correo, contrasena } = solicitud.body || {};
     const pool = obtenerPool();
 
     if (!nombre || !correo || !contrasena) {
@@ -317,26 +314,21 @@ app.post('/api/usuarios', async (solicitud, respuesta) => {
         const {
             columnaId,
             columnaNombre,
-            columnaCorreo,
-            columnaRol
+            columnaCorreo
         } = await obtenerMapaUsuarios(pool);
 
         const columnaCorreoUsada = columnaCorreo || 'correo';
         const consulta = `
-            INSERT INTO usuarios (${columnaNombre}, ${columnaCorreoUsada}, contrasena, rol)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO usuarios (${columnaNombre}, ${columnaCorreoUsada}, contrasena)
+            VALUES ($1, $2, $3)
             RETURNING ${columnaId} AS id,
                       ${columnaNombre} AS nombre,
-                      ${columnaCorreoUsada} AS correo,
-                      ${columnaRol ? `${columnaRol} AS rol` : "'usuario'::text AS rol"}
+                      ${columnaCorreoUsada} AS correo
         `;
-        const { rows } = await pool.query(consulta, [nombre, correo, contrasena, rol || 'usuario']);
+        const { rows } = await pool.query(consulta, [nombre, correo, contrasena]);
         respuesta.status(201).json({
             exito: true,
-            usuario: {
-                ...rows[0],
-                rol: rows[0]?.rol || rol || 'usuario'
-            }
+            usuario: rows[0]
         });
     } catch (error) {
         console.error('Error al crear usuario:', error);
@@ -354,7 +346,7 @@ app.post('/api/usuarios', async (solicitud, respuesta) => {
  */
 app.put('/api/usuarios/:id', async (solicitud, respuesta) => {
     const { id } = solicitud.params;
-    const { nombre, correo, contrasena, rol } = solicitud.body || {};
+    const { nombre, correo, contrasena } = solicitud.body || {};
     const pool = obtenerPool();
 
     if (!id || !nombre || !correo) {
@@ -375,8 +367,7 @@ app.put('/api/usuarios/:id', async (solicitud, respuesta) => {
         const {
             columnaId,
             columnaNombre,
-            columnaCorreo,
-            columnaRol
+            columnaCorreo
         } = await obtenerMapaUsuarios(pool);
 
         const columnaCorreoUsada = columnaCorreo || 'correo';
@@ -384,15 +375,13 @@ app.put('/api/usuarios/:id', async (solicitud, respuesta) => {
             UPDATE usuarios
             SET ${columnaNombre} = $1,
                 ${columnaCorreoUsada} = $2,
-                contrasena = COALESCE($3, contrasena),
-                rol = $4
-            WHERE ${columnaId} = $5
+                contrasena = COALESCE($3, contrasena)
+            WHERE ${columnaId} = $4
             RETURNING ${columnaId} AS id,
                       ${columnaNombre} AS nombre,
-                      ${columnaCorreoUsada} AS correo,
-                      ${columnaRol ? `${columnaRol} AS rol` : "'usuario'::text AS rol"}
+                      ${columnaCorreoUsada} AS correo
         `;
-        const { rows } = await pool.query(consulta, [nombre, correo, contrasena || null, rol || 'usuario', id]);
+        const { rows } = await pool.query(consulta, [nombre, correo, contrasena || null, id]);
 
         if (rows.length === 0) {
             return respuesta.status(404).json({
@@ -530,8 +519,7 @@ app.post('/api/autenticacion', async (solicitud, respuesta) => {
             usuario: {
                 id: usuario.id_usuario ?? usuario.id,
                 correo: usuario.correo,
-                nombre_completo: usuario.nombre_completo ?? usuario.usuario ?? usuario.correo,
-                rol: usuario.rol ?? 'usuario'
+                nombre_completo: usuario.nombre_completo ?? usuario.usuario ?? usuario.correo
             }
         });
     } catch (error) {

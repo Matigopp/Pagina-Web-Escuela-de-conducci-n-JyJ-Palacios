@@ -292,7 +292,6 @@
                 <tr>
                     <th>Nombre completo</th>
                     <th>Correo</th>
-                    <th>Rol</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -320,13 +319,6 @@
                     <label for="usuario-contrasena">Contraseña</label>
                     <input id="usuario-contrasena" name="contrasena" type="password">
                 </div>
-                <div class="grupo-campo">
-                    <label for="usuario-rol">Rol</label>
-                    <select id="usuario-rol" name="rol">
-                        <option value="usuario">Usuario</option>
-                        <option value="administrador">Administrador</option>
-                    </select>
-                </div>
                 <p class="estado-usuarios" id="mensaje-formulario" role="alert" aria-live="assertive"></p>
                 <div class="acciones-formulario">
                     <button class="btn-cancelar" type="button" id="btn-cancelar">Cancelar</button>
@@ -345,7 +337,6 @@
         const campoNombre = document.getElementById('usuario-nombre');
         const campoCorreo = document.getElementById('usuario-correo');
         const campoContrasena = document.getElementById('usuario-contrasena');
-        const campoRol = document.getElementById('usuario-rol');
         const cuerpoTablaUsuarios = document.getElementById('tabla-cuerpo-usuarios');
         const estadoUsuarios = document.getElementById('estado-usuarios');
         const mensajeFormulario = document.getElementById('mensaje-formulario');
@@ -454,7 +445,6 @@
             campoIdUsuario.value = usuario.id;
             campoNombre.value = usuario.nombre || '';
             campoCorreo.value = usuario.correo || '';
-            campoRol.value = usuario.rol || 'usuario';
             campoContrasena.required = false;
             campoContrasena.value = '';
         }
@@ -465,7 +455,7 @@
             if (!usuarios.length) {
                 const fila = document.createElement('tr');
                 const celda = document.createElement('td');
-                celda.colSpan = 4;
+                celda.colSpan = 3;
                 celda.textContent = 'No hay usuarios registrados.';
                 fila.appendChild(celda);
                 cuerpoTablaUsuarios.appendChild(fila);
@@ -477,7 +467,6 @@
                 fila.innerHTML = `
                     <td>${usuario.nombre || ''}</td>
                     <td>${usuario.correo || ''}</td>
-                    <td>${usuario.rol || 'usuario'}</td>
                     <td>
                         <div class="acciones-usuario">
                             <button class="btn-secundario" type="button" data-accion="editar">Editar</button>
@@ -601,7 +590,6 @@
             const nombre = campoNombre.value.trim();
             const correo = campoCorreo.value.trim();
             const contrasena = campoContrasena.value.trim();
-            const rol = campoRol.value;
 
             if (!nombre || !correo) {
                 actualizarMensajeFormulario('Debe completar el nombre y el correo.', true);
@@ -617,11 +605,11 @@
                 actualizarMensajeFormulario('Debe ingresar una contraseña para crear el usuario.', true);
                 return;
             }
-
+            
+            // Todos los usuarios se registran sin roles, el acceso admin se valida por correo.
             const datosUsuario = {
                 nombre,
-                correo,
-                rol
+                correo
             };
 
             // La contraseña solo se envía si el usuario la completó.
