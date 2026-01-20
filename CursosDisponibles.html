@@ -75,6 +75,14 @@
             opacity: 0.85;
         }
 
+        .enlace-admin {
+            display: none;
+        }
+
+        .enlace-admin.visible {
+            display: inline;
+        }
+
         .btn-login {
             background-color: var(--brand-black);
             color: white;
@@ -214,6 +222,7 @@
             <a href="CursosDisponibles.html">Cursos</a>
             <a href="ListaDeContenidos.html">Contenido</a>
             <a href="Contacto.html">Contacto</a>
+            <a href="Usuarios.html" class="enlace-admin" id="enlace-gestion-usuarios">Gestión usuarios</a>
         </nav>
         <a href="ListaDeContenidos.html" class="btn-login">Ver contenidos</a>
     </header>
@@ -268,5 +277,34 @@
     <footer>
         <p>© 2024 Escuela de Conductores J&J Palacios SPA Autorizados por el ministerio.</p>
     </footer>
+    <script>
+        const enlaceGestionUsuarios = document.getElementById('enlace-gestion-usuarios');
+        const claveDatosUsuario = 'usuario_datos';
+        const correoAdmin = 'admin@gmail.com';
+
+        // Obtiene el correo guardado en la sesión para habilitar la sección solo al administrador.
+        function obtenerCorreoSesion() {
+            try {
+                const datosUsuario = JSON.parse(sessionStorage.getItem(claveDatosUsuario));
+                if (datosUsuario && typeof datosUsuario.correo === 'string') {
+                    return datosUsuario.correo.trim().toLowerCase();
+                }
+            } catch (error) {
+                return '';
+            }
+            return '';
+        }
+
+        function actualizarVisibilidadGestionUsuarios() {
+            if (!enlaceGestionUsuarios) {
+                return;
+            }
+            const correoSesion = obtenerCorreoSesion();
+            const esAdmin = correoSesion === correoAdmin;
+            enlaceGestionUsuarios.classList.toggle('visible', esAdmin);
+        }
+
+        actualizarVisibilidadGestionUsuarios();
+    </script>
 </body>
 </html>

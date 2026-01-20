@@ -69,6 +69,14 @@
             opacity: 0.85;
         }
 
+        .enlace-admin {
+            display: none;
+        }
+
+        .enlace-admin.visible {
+            display: inline;
+        }
+
         .main-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -264,6 +272,7 @@
             <a href="CursosDisponibles.html">Cursos</a>
             <a href="ListaDeContenidos.html">Contenidos</a>
             <a href="Contacto.html">Contacto</a>
+            <a href="Usuarios.html" class="enlace-admin" id="enlace-gestion-usuarios">Gestión usuarios</a>
         </nav>
     </header>
 
@@ -341,11 +350,41 @@
         const estadoUsuarios = document.getElementById('estado-usuarios');
         const mensajeFormulario = document.getElementById('mensaje-formulario');
         const botonCancelar = document.getElementById('btn-cancelar');
+        const enlaceGestionUsuarios = document.getElementById('enlace-gestion-usuarios');
         const origenActual = window.location.origin;
         const parametrosBusqueda = new URLSearchParams(window.location.search);
         const apiPersonalizada = parametrosBusqueda.get('api');
         const esLiveServer = origenActual.includes('127.0.0.1:5500') || origenActual.includes('localhost:5500');
         const baseApi = determinarBaseApi(apiPersonalizada);
+        const claveDatosUsuario = 'usuario_datos';
+        const correoAdmin = 'admin@gmail.com';
+
+        // Obtiene el correo guardado en la sesión para validar el acceso de administración.
+        function obtenerCorreoSesion() {
+            try {
+                const datosUsuario = JSON.parse(sessionStorage.getItem(claveDatosUsuario));
+                if (datosUsuario && typeof datosUsuario.correo === 'string') {
+                    return datosUsuario.correo.trim().toLowerCase();
+                }
+            } catch (error) {
+                return '';
+            }
+            return '';
+        }
+
+        // Redirige al inicio si el usuario no es administrador.
+        function verificarAccesoAdministrador() {
+            const correoSesion = obtenerCorreoSesion();
+            const esAdmin = correoSesion === correoAdmin;
+            if (enlaceGestionUsuarios) {
+                enlaceGestionUsuarios.classList.toggle('visible', esAdmin);
+            }
+            if (!esAdmin) {
+                window.location.href = 'index.html';
+                return false;
+            }
+            return true;
+        }
 
         // Controla la visibilidad del modal para crear o editar usuarios.
         function alternarModalUsuario(mostrar) {
@@ -599,7 +638,10 @@
             }
         });
 
-        cargarUsuarios();
+        const accesoPermitido = verificarAccesoAdministrador();
+        if (accesoPermitido) {
+            cargarUsuarios();
+        }
     </script>
 </body>
 </html>

@@ -79,6 +79,14 @@
             opacity: 0.85;
         }
 
+        .enlace-admin {
+            display: none;
+        }
+
+        .enlace-admin.visible {
+            display: inline;
+        }
+
         .btn-login {
             background-color: var(--brand-black);
             color: white;
@@ -645,6 +653,7 @@
             <a href="CursosDisponibles.html">Cursos</a>
             <a href="ListaDeContenidos.html">Contenido</a>
             <a href="Contacto.html">Contacto</a>
+            <a href="Usuarios.html" class="enlace-admin" id="enlace-gestion-usuarios">Gestión usuarios</a>
         </nav>
         <a href="CursosDisponibles.html" class="btn-login">Volver a cursos</a>
     </header>
@@ -816,6 +825,7 @@
         const descripcionPanelDocumentos = document.getElementById('descripcion-panel-documentos');
         const estadoDocumentos = document.getElementById('estado-documentos');
         const btnCerrarSesion = document.getElementById('btn-cerrar-sesion');
+        const enlaceGestionUsuarios = document.getElementById('enlace-gestion-usuarios');
         const origenActual = window.location.origin;
         const parametrosBusqueda = new URLSearchParams(window.location.search);
         const apiPersonalizada = parametrosBusqueda.get('api');
@@ -823,6 +833,7 @@
         const baseApi = determinarBaseApi(apiPersonalizada);
         const claveSesionAutenticada = 'usuario_autenticado';
         const claveDatosUsuario = 'usuario_datos';
+        const correoAdmin = 'admin@gmail.com';
         let usuarioAutenticado = false;
         let datosUsuario = null;
         let tipoListaSolicitada = 'unidades';
@@ -934,6 +945,7 @@
                 }
             }
             actualizarVisibilidadCerrarSesion();
+            actualizarVisibilidadGestionUsuarios();
         }
 
         function cerrarSesionUsuario() {
@@ -943,10 +955,22 @@
             sessionStorage.removeItem(claveDatosUsuario);
             ocultarPanelDocumentos();
             actualizarVisibilidadCerrarSesion();
+            actualizarVisibilidadGestionUsuarios();
         }
 
         function actualizarVisibilidadCerrarSesion() {
             btnCerrarSesion.classList.toggle('visible', usuarioAutenticado);
+        }
+
+        // Controla que el enlace solo se muestre cuando el correo de sesión coincide con el administrador.
+        function actualizarVisibilidadGestionUsuarios() {
+            if (!enlaceGestionUsuarios) {
+                return;
+            }
+            const correoSesion = datosUsuario && typeof datosUsuario.correo === 'string'
+                ? datosUsuario.correo.trim().toLowerCase()
+                : '';
+            enlaceGestionUsuarios.classList.toggle('visible', correoSesion === correoAdmin);
         }
 
         function obtenerNombreDescarga(documento, urlFinal) {
@@ -1139,6 +1163,7 @@
                 datosUsuario = respuesta.usuario;
                 guardarSesionUsuario(respuesta.usuario);
                 actualizarVisibilidadCerrarSesion();
+                actualizarVisibilidadGestionUsuarios();
                 ocultarModalAcceso();
                 await mostrarPanelDocumentos(tipoListaSolicitada);
             } catch (error) {
