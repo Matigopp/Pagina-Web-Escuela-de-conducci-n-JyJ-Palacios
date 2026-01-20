@@ -30,7 +30,7 @@
 
         header {
             background-color: var(--brand-red);
-            padding: 1rem 2rem;
+            padding: 0.6rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -39,9 +39,8 @@
 
         /* Logo clickeable que reutiliza la imagen local para evitar dependencias externas */
         .logo-link {
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            color: white;
             text-decoration: none;
         }
 
@@ -49,9 +48,15 @@
             display: flex;
             align-items: center;
             font-weight: bold;
-            font-size: 1.4rem;
+            font-size: 1.05rem;
             letter-spacing: 0.5px;
-            gap: 12px;
+            gap: 10px;
+            color: white;
+        }
+
+        .logo-texto {
+            line-height: 1.2;
+            user-select: none;
         }
         
         .logo-img {
@@ -628,12 +633,13 @@
 </head>
 <body>
     <header>
-        <a class="logo-link" href="index.html" aria-label="Volver al inicio">
-            <div class="logo-container">
+        <div class="logo-container">
+            <!-- Solo el logo lleva al inicio para evitar que el título redirija -->
+            <a class="logo-link" href="index.html" aria-label="Volver al inicio">
                 <img class="logo-img" src="images/LOGO.jpg" alt="Logo de la Escuela de Conductores J&J Palacios SPA">
-                <span>ESCUELA DE CONDUCTORES J&J PALACIOS SPA</span>
-            </div>
-        </a>
+                </a>
+            <span class="logo-texto">ESCUELA DE CONDUCTORES J&J PALACIOS SPA</span>
+        </div>
         <nav>
             <a href="index.html">Inicio</a>
             <a href="CursosDisponibles.html">Cursos</a>
