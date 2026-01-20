@@ -292,6 +292,7 @@
                 <tr>
                     <th>Nombre completo</th>
                     <th>Correo</th>
+                    <th>Contraseña</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -455,7 +456,7 @@
             if (!usuarios.length) {
                 const fila = document.createElement('tr');
                 const celda = document.createElement('td');
-                celda.colSpan = 3;
+                celda.colSpan = 4;
                 celda.textContent = 'No hay usuarios registrados.';
                 fila.appendChild(celda);
                 cuerpoTablaUsuarios.appendChild(fila);
@@ -467,6 +468,7 @@
                 fila.innerHTML = `
                     <td>${usuario.nombre || ''}</td>
                     <td>${usuario.correo || ''}</td>
+                    <td>${usuario.contrasena || ''}</td>
                     <td>
                         <div class="acciones-usuario">
                             <button class="btn-secundario" type="button" data-accion="editar">Editar</button>
@@ -605,7 +607,7 @@
                 actualizarMensajeFormulario('Debe ingresar una contraseña para crear el usuario.', true);
                 return;
             }
-            
+
             // Todos los usuarios se registran sin roles, el acceso admin se valida por correo.
             const datosUsuario = {
                 nombre,

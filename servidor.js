@@ -293,12 +293,14 @@ app.get('/api/usuarios', async (_solicitud, respuesta) => {
         const {
             columnaId,
             columnaNombre,
-            columnaCorreo
+            columnaCorreo,
+            columnaContrasena
         } = await obtenerMapaUsuarios(pool);
         const consulta = `
             SELECT ${columnaId} AS id,
                    ${columnaNombre} AS nombre,
-                   ${columnaCorreo ? `${columnaCorreo} AS correo` : "NULL::text AS correo"}
+                   ${columnaCorreo ? `${columnaCorreo} AS correo` : "NULL::text AS correo"},
+                   ${columnaContrasena} AS contrasena
             FROM usuarios
             ORDER BY ${columnaNombre} ASC
         `;
@@ -343,6 +345,21 @@ app.post('/api/usuarios', async (solicitud, respuesta) => {
         } = await obtenerMapaUsuarios(pool);
 
         const columnaCorreoUsada = columnaCorreo || 'correo';
+        // Valida el correo antes de insertar para evitar consumir un ID si existe un duplicado.
+        const consultaExistente = `
+            SELECT 1
+            FROM usuarios
+            WHERE ${columnaCorreoUsada} = $1
+            LIMIT 1
+        `;
+        const { rows: coincidencias } = await pool.query(consultaExistente, [correo]);
+
+        if (coincidencias.length > 0) {
+            return respuesta.status(409).json({
+                exito: false,
+                mensaje: 'El correo ya está registrado.'
+            });
+        }
         const consulta = `
             INSERT INTO usuarios (${columnaNombre}, ${columnaCorreoUsada}, contrasena)
             VALUES ($1, $2, $3)
