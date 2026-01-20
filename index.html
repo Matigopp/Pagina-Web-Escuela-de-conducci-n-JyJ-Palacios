@@ -120,6 +120,7 @@
             inset: 0;
             background-size: cover;
             background-position: center;
+            background-repeat: no-repeat;
             opacity: 0;
             transition: opacity 1.2s ease;
         }
@@ -415,7 +416,8 @@
             <!-- Fondos locales para que el inicio cargue sin dependencias externas -->
             <div class="hero-fondo activo" style="background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('images/imagen.jpg');"></div>
             <div class="hero-fondo" style="background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('images/imagenesdesplazables.jpg');"></div>
-            <div class="hero-fondo" style="background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&dpr=1');"></div>
+            <!-- Coloca la imagen dashboard.jpeg dentro de la carpeta images para que cargue en producción -->
+            <div class="hero-fondo" style="background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('images/dashboard.jpeg');"></div>
         </div>
         <div class="hero-contenido">
             <h1>Aprende a conducir con confianza y seguridad</h1>
