@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios - Escuela de Conductores J&J Palacios SPA</title>
+    <style>
+        :root {
+            --brand-red: #f53333;
+            --brand-black: #1a1a1a;
+            --brand-white: #ffffff;
+            --brand-gray: #f4f4f4;
+            --brand-gray-strong: #e3e3e3;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--brand-black);
+            background-color: var(--brand-white);
+        }
+
+        header {
+            background-color: var(--brand-red);
+            padding: 0.8rem 1.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .logo-link {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            color: white;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            gap: 10px;
+        }
+
+        .logo-img {
+            width: 48px;
+            height: auto;
+            border-radius: 50%;
+            border: 2px solid white;
+            object-fit: cover;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 12px;
+            font-weight: 600;
+            transition: opacity 0.3s ease;
+        }
+
+        nav a:hover {
+            opacity: 0.85;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 50px 20px 80px;
+        }
+
+        .titulo-seccion {
+            text-align: center;
+            color: var(--brand-red);
+            font-size: 2.1rem;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .descripcion-seccion {
+            text-align: center;
+            max-width: 720px;
+            margin: 0 auto 35px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .panel-acciones {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 18px;
+        }
+
+        .btn-primario {
+            background-color: var(--brand-red);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primario:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+        }
+
+        .tabla-usuarios {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 18px rgba(0,0,0,0.08);
+        }
+
+        .tabla-usuarios th,
+        .tabla-usuarios td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--brand-gray-strong);
+        }
+
+        .tabla-usuarios thead {
+            background-color: var(--brand-gray);
+            text-transform: uppercase;
+            font-size: 0.82rem;
+            letter-spacing: 0.4px;
+        }
+
+        .acciones-usuario {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secundario,
+        .btn-eliminar {
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-secundario {
+            background-color: #2b2b2b;
+            color: white;
+        }
+
+        .btn-eliminar {
+            background-color: #c62828;
+            color: white;
+        }
+
+        .estado-usuarios {
+            margin-top: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .estado-usuarios.error {
+            color: #c62828;
+        }
+
+        .capa-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .capa-modal.visible {
+            display: flex;
+        }
+
+        .modal-usuario {
+            background-color: white;
+            border-radius: 12px;
+            max-width: 520px;
+            width: 100%;
+            padding: 28px;
+            position: relative;
+            box-shadow: 0 18px 30px rgba(0,0,0,0.2);
+        }
+
+        .modal-usuario h3 {
+            margin-top: 0;
+            color: var(--brand-red);
+        }
+
+        .grupo-campo {
+            margin-bottom: 16px;
+        }
+
+        .grupo-campo label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .grupo-campo input,
+        .grupo-campo select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--brand-gray-strong);
+        }
+
+        .acciones-formulario {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-cancelar {
+            background-color: transparent;
+            border: 1px solid var(--brand-gray-strong);
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            nav {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 12px;
+            }
+
+            .panel-acciones {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a class="logo-link" href="index.html">
+            <div class="logo-container">
+                <img class="logo-img" src="images/Logo.jpg" alt="Logo J&J Palacios">
+                <span>Escuela de Conductores J&J Palacios</span>
+            </div>
+        </a>
+        <nav>
+            <a href="index.html">Inicio</a>
+            <a href="CursosDisponibles.html">Cursos</a>
+            <a href="ListaDeContenidos.html">Contenidos</a>
+            <a href="Contacto.html">Contacto</a>
+        </nav>
+    </header>
+
+    <main class="main-container">
+        <h1 class="titulo-seccion">Gestión de usuarios</h1>
+        <p class="descripcion-seccion">
+            Desde aquí puedes administrar los usuarios registrados. Crea nuevos registros,
+            edita su información o elimina los que ya no sean necesarios en la base de datos.
+        </p>
+
+        <div class="panel-acciones">
+            <button class="btn-primario" id="btn-crear-usuario" type="button">Crear usuario</button>
+        </div>
+
+        <table class="tabla-usuarios" aria-label="Tabla de usuarios">
+            <thead>
+                <tr>
+                    <th>Nombre completo</th>
+                    <th>Correo</th>
+                    <th>Rol</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-cuerpo-usuarios">
+            </tbody>
+        </table>
+
+        <p class="estado-usuarios" id="estado-usuarios" role="status" aria-live="polite"></p>
+    </main>
+
+    <div class="capa-modal" id="capa-modal-usuario" aria-hidden="true">
+        <div class="modal-usuario" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-usuario">
+            <h3 id="titulo-modal-usuario">Crear usuario</h3>
+            <form id="formulario-usuario">
+                <input type="hidden" id="usuario-id">
+                <div class="grupo-campo">
+                    <label for="usuario-nombre">Nombre completo</label>
+                    <input id="usuario-nombre" name="nombre" type="text" required>
+                </div>
+                <div class="grupo-campo">
+                    <label for="usuario-correo">Correo</label>
+                    <input id="usuario-correo" name="correo" type="email" required>
+                </div>
+                <div class="grupo-campo">
+                    <label for="usuario-contrasena">Contraseña</label>
+                    <input id="usuario-contrasena" name="contrasena" type="password">
+                </div>
+                <div class="grupo-campo">
+                    <label for="usuario-rol">Rol</label>
+                    <select id="usuario-rol" name="rol">
+                        <option value="usuario">Usuario</option>
+                        <option value="administrador">Administrador</option>
+                    </select>
+                </div>
+                <p class="estado-usuarios" id="mensaje-formulario" role="alert" aria-live="assertive"></p>
+                <div class="acciones-formulario">
+                    <button class="btn-cancelar" type="button" id="btn-cancelar">Cancelar</button>
+                    <button class="btn-primario" type="submit" id="btn-guardar">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const botonCrearUsuario = document.getElementById('btn-crear-usuario');
+        const capaModalUsuario = document.getElementById('capa-modal-usuario');
+        const formularioUsuario = document.getElementById('formulario-usuario');
+        const tituloModalUsuario = document.getElementById('titulo-modal-usuario');
+        const campoIdUsuario = document.getElementById('usuario-id');
+        const campoNombre = document.getElementById('usuario-nombre');
+        const campoCorreo = document.getElementById('usuario-correo');
+        const campoContrasena = document.getElementById('usuario-contrasena');
+        const campoRol = document.getElementById('usuario-rol');
+        const cuerpoTablaUsuarios = document.getElementById('tabla-cuerpo-usuarios');
+        const estadoUsuarios = document.getElementById('estado-usuarios');
+        const mensajeFormulario = document.getElementById('mensaje-formulario');
+        const botonCancelar = document.getElementById('btn-cancelar');
+        const origenActual = window.location.origin;
+        const parametrosBusqueda = new URLSearchParams(window.location.search);
+        const apiPersonalizada = parametrosBusqueda.get('api');
+        const esLiveServer = origenActual.includes('127.0.0.1:5500') || origenActual.includes('localhost:5500');
+        const baseApi = determinarBaseApi(apiPersonalizada);
+
+        // Controla la visibilidad del modal para crear o editar usuarios.
+        function alternarModalUsuario(mostrar) {
+            capaModalUsuario.classList.toggle('visible', mostrar);
+            capaModalUsuario.setAttribute('aria-hidden', mostrar ? 'false' : 'true');
+            if (!mostrar) {
+                formularioUsuario.reset();
+                campoIdUsuario.value = '';
+                mensajeFormulario.textContent = '';
+                mensajeFormulario.classList.remove('error');
+            }
+        }
+
+        // Define la URL de la API, permitiendo sobrescribirla con el parámetro ?api=http://localhost:PUERTO.
+        function determinarBaseApi(apiDefinida) {
+            if (apiDefinida) {
+                return normalizarBaseApi(apiDefinida);
+            }
+            if (esLiveServer) {
+                return 'http://localhost:3000';
+            }
+            return normalizarBaseApi(origenActual);
+        }
+
+        function normalizarBaseApi(api) {
+            if (!api) {
+                return '';
+            }
+            return api.endsWith('/') ? api.slice(0, -1) : api;
+        }
+
+        function construirRutaApi(ruta) {
+            return `${baseApi}${ruta}`;
+        }
+
+        // Centraliza las llamadas al backend para mostrar errores coherentes.
+        async function solicitarApi(ruta, opciones = {}, mensajeConexion) {
+            const url = construirRutaApi(ruta);
+            try {
+                const respuesta = await fetch(url, opciones);
+                const datos = await respuesta.json().catch(() => ({}));
+                return { respuesta, datos };
+            } catch (_error) {
+                const mensaje = mensajeConexion || 'No se pudo contactar el servidor. Verifique que la API esté encendida.';
+                throw new Error(mensaje);
+            }
+        }
+
+        function actualizarEstadoUsuarios(mensaje, esError = false) {
+            estadoUsuarios.textContent = mensaje;
+            estadoUsuarios.classList.toggle('error', esError);
+        }
+
+        function actualizarMensajeFormulario(mensaje, esError = false) {
+            mensajeFormulario.textContent = mensaje;
+            mensajeFormulario.classList.toggle('error', esError);
+        }
+
+        function prepararFormulario(usuario) {
+            if (!usuario) {
+                tituloModalUsuario.textContent = 'Crear usuario';
+                campoContrasena.required = true;
+                return;
+            }
+
+            tituloModalUsuario.textContent = 'Editar usuario';
+            campoIdUsuario.value = usuario.id;
+            campoNombre.value = usuario.nombre || '';
+            campoCorreo.value = usuario.correo || '';
+            campoRol.value = usuario.rol || 'usuario';
+            campoContrasena.required = false;
+            campoContrasena.value = '';
+        }
+
+        function renderizarUsuarios(usuarios) {
+            cuerpoTablaUsuarios.innerHTML = '';
+
+            if (!usuarios.length) {
+                const fila = document.createElement('tr');
+                const celda = document.createElement('td');
+                celda.colSpan = 4;
+                celda.textContent = 'No hay usuarios registrados.';
+                fila.appendChild(celda);
+                cuerpoTablaUsuarios.appendChild(fila);
+                return;
+            }
+
+            usuarios.forEach((usuario) => {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td>${usuario.nombre || ''}</td>
+                    <td>${usuario.correo || ''}</td>
+                    <td>${usuario.rol || 'usuario'}</td>
+                    <td>
+                        <div class="acciones-usuario">
+                            <button class="btn-secundario" type="button" data-accion="editar">Editar</button>
+                            <button class="btn-eliminar" type="button" data-accion="eliminar">Eliminar</button>
+                        </div>
+                    </td>
+                `;
+
+                const [botonEditar, botonEliminar] = fila.querySelectorAll('button');
+
+                botonEditar.addEventListener('click', () => {
+                    prepararFormulario(usuario);
+                    alternarModalUsuario(true);
+                });
+
+                botonEliminar.addEventListener('click', () => {
+                    eliminarUsuario(usuario.id);
+                });
+
+                cuerpoTablaUsuarios.appendChild(fila);
+            });
+        }
+
+        async function cargarUsuarios() {
+            actualizarEstadoUsuarios('Cargando usuarios...');
+
+            try {
+                const { respuesta, datos } = await solicitarApi(
+                    '/api/usuarios',
+                    {},
+                    'No se pudo contactar el servidor para obtener los usuarios.'
+                );
+
+                if (!respuesta.ok || !datos.exito) {
+                    const mensaje = datos.mensaje || 'No se pudieron obtener los usuarios.';
+                    throw new Error(mensaje);
+                }
+
+                const usuarios = Array.isArray(datos.usuarios) ? datos.usuarios : [];
+                renderizarUsuarios(usuarios);
+                actualizarEstadoUsuarios('');
+            } catch (error) {
+                renderizarUsuarios([]);
+                actualizarEstadoUsuarios(error.message, true);
+            }
+        }
+
+        async function crearUsuario(datosUsuario) {
+            const { respuesta, datos } = await solicitarApi('/api/usuarios', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datosUsuario)
+            }, 'No se pudo contactar el servidor para crear el usuario.');
+
+            if (!respuesta.ok || !datos.exito) {
+                const mensaje = datos.mensaje || 'No se pudo crear el usuario.';
+                throw new Error(mensaje);
+            }
+        }
+
+        async function actualizarUsuario(id, datosUsuario) {
+            const { respuesta, datos } = await solicitarApi(`/api/usuarios/${encodeURIComponent(id)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datosUsuario)
+            }, 'No se pudo contactar el servidor para actualizar el usuario.');
+
+            if (!respuesta.ok || !datos.exito) {
+                const mensaje = datos.mensaje || 'No se pudo actualizar el usuario.';
+                throw new Error(mensaje);
+            }
+        }
+
+        async function eliminarUsuario(id) {
+            if (!id) {
+                return;
+            }
+
+            const confirmacion = window.confirm('Confirme que desea eliminar este usuario.');
+            if (!confirmacion) {
+                return;
+            }
+
+            try {
+                const { respuesta, datos } = await solicitarApi(`/api/usuarios/${encodeURIComponent(id)}`, {
+                    method: 'DELETE'
+                }, 'No se pudo contactar el servidor para eliminar el usuario.');
+
+                if (!respuesta.ok || !datos.exito) {
+                    const mensaje = datos.mensaje || 'No se pudo eliminar el usuario.';
+                    throw new Error(mensaje);
+                }
+
+                await cargarUsuarios();
+            } catch (error) {
+                actualizarEstadoUsuarios(error.message, true);
+            }
+        }
+
+        botonCrearUsuario.addEventListener('click', () => {
+            formularioUsuario.reset();
+            prepararFormulario(null);
+            alternarModalUsuario(true);
+        });
+
+        botonCancelar.addEventListener('click', () => {
+            alternarModalUsuario(false);
+        });
+
+        capaModalUsuario.addEventListener('click', (evento) => {
+            if (evento.target === capaModalUsuario) {
+                alternarModalUsuario(false);
+            }
+        });
+
+        formularioUsuario.addEventListener('submit', async (evento) => {
+            evento.preventDefault();
+            actualizarMensajeFormulario('', false);
+
+            const idUsuario = campoIdUsuario.value.trim();
+            const nombre = campoNombre.value.trim();
+            const correo = campoCorreo.value.trim();
+            const contrasena = campoContrasena.value.trim();
+            const rol = campoRol.value;
+
+            if (!nombre || !correo) {
+                actualizarMensajeFormulario('Debe completar el nombre y el correo.', true);
+                return;
+            }
+
+            if (!idUsuario && !contrasena) {
+                actualizarMensajeFormulario('Debe ingresar una contraseña para crear el usuario.', true);
+                return;
+            }
+
+            const datosUsuario = {
+                nombre,
+                correo,
+                rol
+            };
+
+            // La contraseña solo se envía si el usuario la completó.
+            if (contrasena) {
+                datosUsuario.contrasena = contrasena;
+            }
+
+            try {
+                if (idUsuario) {
+                    await actualizarUsuario(idUsuario, datosUsuario);
+                } else {
+                    await crearUsuario(datosUsuario);
+                }
+
+                alternarModalUsuario(false);
+                await cargarUsuarios();
+            } catch (error) {
+                actualizarMensajeFormulario(error.message, true);
+            }
+        });
+
+        cargarUsuarios();
+    </script>
+</body>
+</html>

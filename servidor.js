@@ -184,6 +184,158 @@ app.delete('/api/documentos/:id', async (solicitud, respuesta) => {
     }
 });
 
+/**
+ * Obtiene todos los usuarios registrados.
+ * Se asume la tabla usuarios con columnas: id_usuario, nombre_completo, correo, contrasena, rol.
+ */
+app.get('/api/usuarios', async (_solicitud, respuesta) => {
+    const pool = obtenerPool();
+
+    try {
+        const consulta = `
+            SELECT id_usuario AS id,
+                   nombre_completo AS nombre,
+                   correo,
+                   rol
+            FROM usuarios
+            ORDER BY nombre_completo ASC
+        `;
+        const { rows } = await pool.query(consulta);
+        respuesta.json({ exito: true, usuarios: rows });
+    } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+        respuesta.status(500).json({
+            exito: false,
+            mensaje: 'No se pudieron obtener los usuarios, intente nuevamente.',
+            detalle: error.message
+        });
+    }
+});
+
+/**
+ * Registra un usuario en la base de datos.
+ */
+app.post('/api/usuarios', async (solicitud, respuesta) => {
+    const { nombre, correo, contrasena, rol } = solicitud.body || {};
+    const pool = obtenerPool();
+
+    if (!nombre || !correo || !contrasena) {
+        return respuesta.status(400).json({
+            exito: false,
+            mensaje: 'Debe proporcionar nombre, correo y contraseña.'
+        });
+    }
+
+    try {
+        const consulta = `
+            INSERT INTO usuarios (nombre_completo, correo, contrasena, rol)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id_usuario AS id,
+                      nombre_completo AS nombre,
+                      correo,
+                      rol
+        `;
+        const { rows } = await pool.query(consulta, [nombre, correo, contrasena, rol || 'usuario']);
+        respuesta.status(201).json({ exito: true, usuario: rows[0] });
+    } catch (error) {
+        console.error('Error al crear usuario:', error);
+        respuesta.status(500).json({
+            exito: false,
+            mensaje: 'No se pudo crear el usuario, intente nuevamente.',
+            detalle: error.message
+        });
+    }
+});
+
+/**
+ * Actualiza un usuario existente.
+ * Si no se envía contraseña, se conserva la clave registrada actualmente.
+ */
+app.put('/api/usuarios/:id', async (solicitud, respuesta) => {
+    const { id } = solicitud.params;
+    const { nombre, correo, contrasena, rol } = solicitud.body || {};
+    const pool = obtenerPool();
+
+    if (!id || !nombre || !correo) {
+        return respuesta.status(400).json({
+            exito: false,
+            mensaje: 'Debe proporcionar ID, nombre y correo.'
+        });
+    }
+
+    try {
+        const consulta = `
+            UPDATE usuarios
+            SET nombre_completo = $1,
+                correo = $2,
+                contrasena = COALESCE($3, contrasena),
+                rol = $4
+            WHERE id_usuario = $5
+            RETURNING id_usuario AS id,
+                      nombre_completo AS nombre,
+                      correo,
+                      rol
+        `;
+        const { rows } = await pool.query(consulta, [nombre, correo, contrasena || null, rol || 'usuario', id]);
+
+        if (rows.length === 0) {
+            return respuesta.status(404).json({
+                exito: false,
+                mensaje: 'No se encontró el usuario solicitado.'
+            });
+        }
+
+        respuesta.json({ exito: true, usuario: rows[0] });
+    } catch (error) {
+        console.error('Error al actualizar usuario:', error);
+        respuesta.status(500).json({
+            exito: false,
+            mensaje: 'No se pudo actualizar el usuario, intente nuevamente.',
+            detalle: error.message
+        });
+    }
+});
+
+/**
+ * Elimina un usuario por su ID.
+ */
+app.delete('/api/usuarios/:id', async (solicitud, respuesta) => {
+    const { id } = solicitud.params;
+    const pool = obtenerPool();
+
+    if (!id) {
+        return respuesta.status(400).json({
+            exito: false,
+            mensaje: 'Debe proporcionar el ID del usuario.'
+        });
+    }
+
+    try {
+        const consulta = `
+            DELETE FROM usuarios
+            WHERE id_usuario = $1
+            RETURNING id_usuario AS id
+        `;
+        const { rows } = await pool.query(consulta, [id]);
+
+        if (rows.length === 0) {
+            return respuesta.status(404).json({
+                exito: false,
+                mensaje: 'No se encontró el usuario solicitado.'
+            });
+        }
+
+        respuesta.json({ exito: true });
+    } catch (error) {
+        console.error('Error al eliminar usuario:', error);
+        respuesta.status(500).json({
+            exito: false,
+            mensaje: 'No se pudo eliminar el usuario, intente nuevamente.',
+            detalle: error.message
+        });
+    }
+});
+
 
 /**
  * Permite consultar rápidamente si la base de datos responde.
@@ -205,6 +357,8 @@ app.get('/api/estado-bd', async (_solicitud, respuesta) => {
         fecha: estado.fecha
     });
 });
+
+
 
 /**
  * Valida las credenciales contra la tabla usuarios usando columnas correo y contrasena.
