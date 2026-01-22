@@ -212,10 +212,10 @@
         .course-details {
             padding: 22px 28px 28px;
             min-height: 210px;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            gap: 24px;
-            align-items: end;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
         }
 
         .course-details p {
@@ -237,10 +237,9 @@
             color: white;
             padding: 12px 20px;
             font-weight: 700;
-            text-transform: uppercase;
             border-radius: 999px;
             box-shadow: 0 10px 20px rgba(245, 51, 51, 0.35);
-            align-self: center;
+            white-space: nowrap;
         }
 
         footer {
@@ -300,7 +299,7 @@
                         <li>Material de apoyo para reforzar el aprendizaje teórico.</li>
                         <li>Instructor certificado, con experiencia en formación de conductores.</li>
                     </ul>
-                    <div class="course-value">VALOR: $200.000</div>
+                    <div class="course-value">Valor: $200.000</div>
                 </div>
             </div>
         </div>
