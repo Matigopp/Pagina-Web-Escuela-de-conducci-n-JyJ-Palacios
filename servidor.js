@@ -5,10 +5,16 @@ const { obtenerPool, probarConexion } = require('./configuracion/conexionBaseDat
 const app = express();
 const puerto = Number(process.env.PUERTO_APP) || 3000;
 
+// Detecta si el proceso corre dentro del entorno de Vercel.
+function estaEnVercel() {
+    return Boolean(process.env.VERCEL);
+}
+
 /**
  * Obtiene las columnas disponibles en la tabla usuarios para mantener compatibilidad
  * con diferentes versiones del esquema.
  */
+
 async function obtenerColumnasUsuarios(pool) {
     const consulta = `
         SELECT column_name
@@ -600,6 +606,11 @@ app.post('/api/autenticacion', async (solicitud, respuesta) => {
     }
 });
 
-app.listen(puerto, () => {
-    console.log(`Servidor iniciado en http://localhost:${puerto}`);
-});
+if (!estaEnVercel()) {
+    app.listen(puerto, () => {
+        console.log(`Servidor iniciado en http://localhost:${puerto}`);
+    });
+}
+
+// Exporta la app para que Vercel la ejecute como función serverless.
+module.exports = app;
