@@ -122,7 +122,7 @@
             background-position: center;
             background-repeat: no-repeat;
             opacity: 0;
-            transition: none;
+            transition: opacity 1s ease-in-out;
         }
 
         .hero-fondo.activo {
@@ -153,22 +153,22 @@
         }
 
         .control-hero {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: 2px solid white;
-            background-color: transparent;
+            width: 26px;
+            height: 6px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            background-color: rgba(255, 255, 255, 0.25);
             cursor: pointer;
-            opacity: 0.75;
-            transition: background-color 0.3s ease, transform 0.2s ease, opacity 0.2s ease;
+            opacity: 0.7;
+            transition: background-color 0.4s ease, width 0.4s ease, opacity 0.2s ease;
         }
 
         .control-hero:hover {
             opacity: 1;
-            transform: scale(1.05);
         }
 
         .control-hero.activo {
+            width: 40px;
             background-color: white;
             opacity: 1;
         }
@@ -498,6 +498,8 @@
             const fondosHero = document.querySelectorAll('.hero-fondo');
             const controlesHero = document.querySelectorAll('.control-hero');
             let indiceActual = 0;
+            let intervaloHero = null;
+            const tiempoCambioHero = 5000;
 
             // Reinicia la sesión al abrir el sitio para garantizar que el acceso parta sin usuario autenticado.
             sessionStorage.removeItem('usuario_autenticado');
@@ -538,11 +540,25 @@
                 indiceActual = indiceNuevo;
             }
 
+            // Reinicia el carrusel para que el usuario tenga tiempo de ver la imagen elegida.
+            function reiniciarCambioAutomatico() {
+                if (intervaloHero) {
+                    clearInterval(intervaloHero);
+                }
+                intervaloHero = setInterval(() => {
+                    const siguienteIndice = (indiceActual + 1) % fondosHero.length;
+                    mostrarFondoSeleccionado(siguienteIndice);
+                }, tiempoCambioHero);
+            }
+
             controlesHero.forEach((control, indice) => {
                 control.addEventListener('click', () => {
                     mostrarFondoSeleccionado(indice);
+                    reiniciarCambioAutomatico();
                 });
             });
+
+            reiniciarCambioAutomatico();
              // Visor para ampliar imágenes de la galería con fondo sombreado
             const imagenesGaleria = document.querySelectorAll('.tarjeta-imagen img');
             const visorImagen = document.querySelector('.visor-imagen');
