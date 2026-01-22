@@ -135,37 +135,45 @@
 
         .courses-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: minmax(0, 1fr);
             gap: 24px;
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         .course-card {
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
+            border: 2px solid #1a1a1a;
+            border-radius: 0;
             overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+            box-shadow: none;
             background-color: white;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .course-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 14px 22px rgba(0,0,0,0.16);
+        .course-header {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 24px;
+            padding: 24px;
+            align-items: start;
+            border-bottom: 2px solid #1a1a1a;
         }
 
         .course-illustration {
-            height: 170px;
+            width: 200px;
+            height: 150px;
             background-size: cover;
             background-position: center;
+            border: 2px solid #1a1a1a;
         }
 
         .course-body {
-            padding: 20px;
+            padding: 0;
         }
 
         .course-body h3 {
-            margin: 0 0 10px 0;
+            margin: 0 0 12px 0;
             color: var(--brand-black);
+            font-size: 1.6rem;
         }
 
         .course-body p {
@@ -173,31 +181,35 @@
             line-height: 1.55;
         }
 
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
+        .course-details {
+            padding: 20px 24px 24px;
+            min-height: 220px;
+            position: relative;
+        }
+
+        .course-details h4 {
+            margin: 0 0 12px 0;
+            font-size: 1.1rem;
             font-weight: 600;
+            color: var(--brand-black);
         }
 
-        .info-row span {
-            color: var(--brand-red);
+        .course-details ul {
+            margin: 0;
+            padding-left: 18px;
+            line-height: 1.6;
         }
 
-        .btn-primary {
-            display: inline-block;
+        .course-value {
+            position: absolute;
+            right: 24px;
+            bottom: 24px;
             background-color: var(--brand-red);
             color: white;
-            padding: 10px 18px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-        }
-
-        .btn-primary:hover {
-            background-color: #d42b2b;
+            padding: 12px 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 2px;
         }
 
         footer {
@@ -236,39 +248,24 @@
         <h2>Programas destacados</h2>
         <div class="courses-grid">
             <div class="course-card">
-                <div class="course-illustration" style="background-image: url('https://images.pexels.com/photos/97075/pexels-photo-97075.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');"></div>
-                <div class="course-body">
-                    <h3>Licencia Clase B</h3>
-                    <p>Curso integral para vehículos particulares. Incluye simulaciones, prácticas en ciudad y acompañamiento para el examen teórico.</p>
-                    <div class="info-row">
-                        <span>Duración: 5 semanas</span>
-                        <span>Modalidad: Mixta</span>
+                <div class="course-header">
+                    <div class="course-illustration" style="background-image: url('https://images.pexels.com/photos/97075/pexels-photo-97075.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');"></div>
+                    <div class="course-body">
+                        <h3>Curso Estándar de Conducción</h3>
+                        <p>Nuestro Curso Estándar de Conducción Clase B está diseñado para personas que desean aprender a conducir desde cero, entregando una formación completa, teórica y práctica, orientada a una conducción segura y responsable.</p>
                     </div>
-                    <a class="btn-primary" href="ListaDeContenidos.html">Ver temario</a>
                 </div>
-            </div>
-            <div class="course-card">
-                <div class="course-illustration" style="background-image: url('https://images.pexels.com/photos/1402787/pexels-photo-1402787.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');"></div>
-                <div class="course-body">
-                    <h3>Licencia Clase C</h3>
-                    <p>Formación para motocicletas con énfasis en equilibrio, maniobras defensivas y reconocimiento de riesgos urbanos.</p>
-                    <div class="info-row">
-                        <span>Duración: 4 semanas</span>
-                        <span>Modalidad: Presencial</span>
-                    </div>
-                    <a class="btn-primary" href="ListaDeContenidos.html">Ver temario</a>
-                </div>
-            </div>
-            <div class="course-card">
-                <div class="course-illustration" style="background-image: url('https://images.pexels.com/photos/2199293/pexels-photo-2199293.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');"></div>
-                <div class="course-body">
-                    <h3>Licencias profesionales</h3>
-                    <p>Ruta avanzada para transporte de carga y pasajeros. Prácticas con camiones urbanos y revisión de normativa especializada.</p>
-                    <div class="info-row">
-                        <span>Duración: 6 semanas</span>
-                        <span>Modalidad: Mixta</span>
-                    </div>
-                    <a class="btn-primary" href="ListaDeContenidos.html">Ver temario</a>
+            <div class="course-details">
+                    <h4>datos del curso</h4>
+                    <p>Incluye:</p>
+                    <ul>
+                        <li>12 clases teóricas de 60 minutos cada una.</li>
+                        <li>12 clases prácticas de 60 minutos cada una.</li>
+                        <li>Material de apoyo para reforzar el aprendizaje teórico.</li>
+                        <li>Vehículo acondicionado con doble pedalera, que garantiza mayor seguridad durante las prácticas.</li>
+                        <li>Instructor certificado, con experiencia en formación de conductores.</li>
+                    </ul>
+                    <div class="course-value">VALOR: $200.000</div>
                 </div>
             </div>
         </div>
