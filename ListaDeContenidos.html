@@ -103,6 +103,10 @@
             color: var(--brand-red);
         }
 
+        .btn-login.oculto {
+            display: none;
+        }
+
         .btn-cerrar-sesion {
             position: fixed;
             bottom: 20px;
@@ -830,6 +834,7 @@
         const tituloPanelDocumentos = document.getElementById('titulo-panel-documentos');
         const descripcionPanelDocumentos = document.getElementById('descripcion-panel-documentos');
         const estadoDocumentos = document.getElementById('estado-documentos');
+        const btnIniciarSesion = document.querySelector('.btn-login');
         const btnCerrarSesion = document.getElementById('btn-cerrar-sesion');
         const enlaceGestionUsuarios = document.getElementById('enlace-gestion-usuarios');
         const parametrosBusqueda = new URLSearchParams(window.location.search);
@@ -950,6 +955,7 @@
                 }
             }
             actualizarVisibilidadCerrarSesion();
+            actualizarVisibilidadInicioSesion();
             actualizarVisibilidadGestionUsuarios();
         }
 
@@ -960,11 +966,20 @@
             sessionStorage.removeItem(claveDatosUsuario);
             ocultarPanelDocumentos();
             actualizarVisibilidadCerrarSesion();
+            actualizarVisibilidadInicioSesion();
             actualizarVisibilidadGestionUsuarios();
         }
 
         function actualizarVisibilidadCerrarSesion() {
             btnCerrarSesion.classList.toggle('visible', usuarioAutenticado);
+        }
+
+        // Oculta el botón de inicio de sesión cuando el usuario ya está autenticado.
+        function actualizarVisibilidadInicioSesion() {
+            if (!btnIniciarSesion) {
+                return;
+            }
+            btnIniciarSesion.classList.toggle('oculto', usuarioAutenticado);
         }
 
         // Controla que el enlace solo se muestre cuando el correo de sesión coincide con el administrador.
@@ -1173,6 +1188,7 @@
                 datosUsuario = respuesta.usuario;
                 guardarSesionUsuario(respuesta.usuario);
                 actualizarVisibilidadCerrarSesion();
+                actualizarVisibilidadInicioSesion();
                 actualizarVisibilidadGestionUsuarios();
                 ocultarModalAcceso();
                 await mostrarPanelDocumentos(tipoListaSolicitada);
