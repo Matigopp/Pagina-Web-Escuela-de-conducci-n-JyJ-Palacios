@@ -243,6 +243,56 @@
             align-self: flex-end;
         }
 
+        /* Contenedor para mostrar dos planes prácticos en columnas divididas */
+        .course-plans {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+            width: 100%;
+            padding: 18px;
+            border-radius: 14px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(26, 26, 26, 0.08);
+            position: relative;
+        }
+
+        /* Separación vertical centrada para mantener claridad entre planes */
+        .course-plans::before {
+            content: "";
+            position: absolute;
+            top: 16px;
+            bottom: 16px;
+            left: 50%;
+            width: 1px;
+            background-color: rgba(26, 26, 26, 0.15);
+            transform: translateX(-50%);
+        }
+
+        .course-plan {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 8px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .course-plan h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--brand-black);
+        }
+
+        .course-plan ul {
+            margin: 0;
+            padding-left: 18px;
+            line-height: 1.6;
+        }
+
+        .course-plan .course-value {
+            align-self: flex-start;
+        }
+
         footer {
             background-color: var(--brand-black);
             color: white;
@@ -272,7 +322,6 @@
 
     <section class="hero">
         <h1>Cursos disponibles</h1>
-        <p>Elige la ruta de aprendizaje que necesitas. Todos los programas incluyen material teórico, práctica guiada y evaluaciones previas al examen.</p>
     </section>
 
     <section class="section-container">
@@ -280,7 +329,7 @@
         <div class="courses-grid">
             <div class="course-card">
                 <div class="course-header">
-                    <div class="course-illustration" style="background-image: url('https://images.pexels.com/photos/97075/pexels-photo-97075.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');"></div>
+                    <div class="course-illustration" style="background-image: url('images/clases.jpeg');"></div>
                     <div class="course-body">
                         <!-- Etiquetas para destacar el tipo de curso sin alterar la información principal -->
                         <div class="course-labels">
@@ -301,6 +350,43 @@
                         <li>Instructor certificado, con experiencia en formación de conductores.</li>
                     </ul>
                     <div class="course-value">Valor: $200.000</div>
+                </div>
+            </div>
+            <div class="course-card">
+                <div class="course-header">
+                    <div class="course-illustration" style="background-image: url('images/volanteflipante.jpeg');"></div>
+                    <div class="course-body">
+                        <div class="course-labels">
+                            <span class="course-label">Refuerzo práctico</span>
+                            <span class="course-label">Nivel intermedio</span>
+                        </div>
+                        <h3>¿Ya manejas? Refuerza tu técnica</h3>
+                        <p>Nuestro Curso de Reforzamiento Práctico de Conducción está dirigido a personas que ya manejan, pero desean mejorar, corregir o fortalecer sus habilidades al volante, ya sea para ganar mayor confianza, perfeccionar técnicas de conducción o prepararse mejor para el examen práctico.</p>
+                    </div>
+                </div>
+                <div class="course-details">
+                    <p>Elige tu plan práctico:</p>
+                    <!-- Bloque con dos planes paralelos para comparar duración y valor -->
+                    <div class="course-plans">
+                        <div class="course-plan">
+                            <h4>5 clases prácticas</h4>
+                            <ul>
+                                <li>Instructor certificado.</li>
+                                <li>Vehículo acondicionado con doble pedalera.</li>
+                                <li>Duración: 60 minutos cada una.</li>
+                            </ul>
+                            <div class="course-value">Valor: $100.000</div>
+                        </div>
+                        <div class="course-plan">
+                            <h4>7 clases prácticas</h4>
+                            <ul>
+                                <li>Instructor certificado.</li>
+                                <li>Vehículo acondicionado con doble pedalera.</li>
+                                <li>Duración: 60 minutos cada una.</li>
+                            </ul>
+                            <div class="course-value">Valor: $140.000</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
