@@ -10,6 +10,19 @@ function estaEnVercel() {
     return Boolean(process.env.VERCEL);
 }
 
+// Verifica si existe alguna variable de entorno con la configuración de la base de datos.
+function hayConfiguracionBaseDatos() {
+    return Boolean(
+        process.env.SUPABASE_DB_URL
+        || process.env.DATABASE_URL
+        || process.env.PG_HOST
+        || process.env.PG_DATABASE
+        || process.env.PG_USER
+        || process.env.PG_PASSWORD
+        || process.env.PG_PORT
+    );
+}
+
 /**
  * Obtiene las columnas disponibles en la tabla usuarios para mantener compatibilidad
  * con diferentes versiones del esquema.
@@ -121,12 +134,19 @@ app.use((solicitud, respuesta, siguiente) => {
 // Sirve los archivos estáticos existentes para mantener la página disponible.
 app.use(express.static(path.join(__dirname)));
 
-asegurarColumnaNombre(obtenerPool()).catch((error) => {
-    console.error('No se pudo preparar la columna nombre en usuarios:', error);
-});
-asegurarSecuenciaUsuarios(obtenerPool()).catch((error) => {
-    console.error('No se pudo preparar la secuencia de usuarios:', error);
-});
+const pool = obtenerPool();
+const debePrepararBaseDatos = !estaEnVercel() || hayConfiguracionBaseDatos();
+
+if (debePrepararBaseDatos) {
+    asegurarColumnaNombre(pool).catch((error) => {
+        console.error('No se pudo preparar la columna nombre en usuarios:', error);
+    });
+    asegurarSecuenciaUsuarios(pool).catch((error) => {
+        console.error('No se pudo preparar la secuencia de usuarios:', error);
+    });
+} else {
+    console.warn('Se omitió la preparación de la base de datos porque no hay configuración disponible.');
+}
 
 
 /**
