@@ -4,14 +4,22 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const usarSSL = (process.env.PG_SSL || 'false').toLowerCase() === 'true';
+const urlSupabase = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
+const usarSSL = (process.env.PG_SSL || '').toLowerCase() === 'true'
+    || Boolean(urlSupabase)
+    || Boolean(process.env.VERCEL);
 
 const configuracionConexion = {
-    host: process.env.PG_HOST || 'localhost',
-    port: Number(process.env.PG_PORT) || 5432,
-    database: process.env.PG_DATABASE || 'JJPalacios',
-    user: process.env.PG_USER || 'postgres',
-    password: process.env.PG_PASSWORD || 'admin',
+    ...(urlSupabase
+        ? { connectionString: urlSupabase }
+        : {
+            host: process.env.PG_HOST || 'localhost',
+            port: Number(process.env.PG_PORT) || 5432,
+            database: process.env.PG_DATABASE || 'JJPalacios',
+            user: process.env.PG_USER || 'postgres',
+            password: process.env.PG_PASSWORD || 'admin'
+        }),
+    // Supabase exige TLS en conexiones externas, por eso se habilita SSL automáticamente.
     ssl: usarSSL ? { rejectUnauthorized: false } : false,
     max: Number(process.env.PG_POOL_MAX) || 10,
     idleTimeoutMillis: Number(process.env.PG_IDLE_TIMEOUT) || 30000
