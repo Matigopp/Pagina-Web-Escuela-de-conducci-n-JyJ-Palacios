@@ -1,6 +1,6 @@
 const path = require('path');
 const express = require('express');
-const { obtenerPool, probarConexion } = require('./configuracion/conexionBaseDatos');
+const { obtenerPool, probarConexion, hayConfiguracionBaseDatos } = require('./configuracion/conexionBaseDatos');
 
 const app = express();
 const puerto = Number(process.env.PUERTO_APP) || 3000;
@@ -11,17 +11,7 @@ function estaEnVercel() {
 }
 
 // Verifica si existe alguna variable de entorno con la configuración de la base de datos.
-function hayConfiguracionBaseDatos() {
-    return Boolean(
-        process.env.SUPABASE_DB_URL
-        || process.env.DATABASE_URL
-        || process.env.PG_HOST
-        || process.env.PG_DATABASE
-        || process.env.PG_USER
-        || process.env.PG_PASSWORD
-        || process.env.PG_PORT
-    );
-}
+const hayConfiguracionBaseDatosEnEntorno = hayConfiguracionBaseDatos();
 
 /**
  * Obtiene las columnas disponibles en la tabla usuarios para mantener compatibilidad
@@ -135,17 +125,35 @@ app.use((solicitud, respuesta, siguiente) => {
 app.use(express.static(path.join(__dirname)));
 
 const pool = obtenerPool();
-const debePrepararBaseDatos = !estaEnVercel() || hayConfiguracionBaseDatos();
+const debePrepararBaseDatos = !estaEnVercel() || hayConfiguracionBaseDatosEnEntorno;
 
 if (debePrepararBaseDatos) {
-    asegurarColumnaNombre(pool).catch((error) => {
-        console.error('No se pudo preparar la columna nombre en usuarios:', error);
-    });
-    asegurarSecuenciaUsuarios(pool).catch((error) => {
-        console.error('No se pudo preparar la secuencia de usuarios:', error);
-    });
+    if (!pool) {
+        console.warn('No se pudo preparar la base de datos porque no hay un pool disponible.');
+    } else {
+        asegurarColumnaNombre(pool).catch((error) => {
+            console.error('No se pudo preparar la columna nombre en usuarios:', error);
+        });
+        asegurarSecuenciaUsuarios(pool).catch((error) => {
+            console.error('No se pudo preparar la secuencia de usuarios:', error);
+        });
+    }
 } else {
     console.warn('Se omitió la preparación de la base de datos porque no hay configuración disponible.');
+}
+
+function obtenerPoolParaSolicitud(respuesta) {
+    const pool = obtenerPool();
+
+    if (!pool) {
+        respuesta.status(503).json({
+            exito: false,
+            mensaje: 'No hay configuración de base de datos disponible en este entorno.'
+        });
+        return null;
+    }
+
+    return pool;
 }
 
 
@@ -156,7 +164,11 @@ if (debePrepararBaseDatos) {
  */
 app.get('/api/documentos', async (solicitud, respuesta) => {
     const tipo = solicitud.query.tipo || 'unidades';
-    const pool = obtenerPool();
+    const pool = obtenerPoolParaSolicitud(respuesta);
+
+    if (!pool) {
+        return;
+    }
 
     try {
         const consulta = `
@@ -188,7 +200,11 @@ app.get('/api/documentos', async (solicitud, respuesta) => {
  */
 app.post('/api/documentos', async (solicitud, respuesta) => {
     const { titulo, descripcion, url, tipo } = solicitud.body || {};
-    const pool = obtenerPool();
+    const pool = obtenerPoolParaSolicitud(respuesta);
+
+    if (!pool) {
+        return;
+    }
 
     if (!titulo || !url || !tipo) {
         return respuesta.status(400).json({
@@ -225,7 +241,11 @@ app.post('/api/documentos', async (solicitud, respuesta) => {
 app.put('/api/documentos/:id', async (solicitud, respuesta) => {
     const { id } = solicitud.params;
     const { titulo, descripcion, url, tipo } = solicitud.body || {};
-    const pool = obtenerPool();
+    const pool = obtenerPoolParaSolicitud(respuesta);
+
+    if (!pool) {
+        return;
+    }
 
     if (!id || !titulo || !url || !tipo) {
         return respuesta.status(400).json({
@@ -273,7 +293,11 @@ app.put('/api/documentos/:id', async (solicitud, respuesta) => {
  */
 app.delete('/api/documentos/:id', async (solicitud, respuesta) => {
     const { id } = solicitud.params;
-    const pool = obtenerPool();
+    const pool = obtenerPoolParaSolicitud(respuesta);
+
+    if (!pool) {
+        return;
+    }
 
     if (!id) {
         return respuesta.status(400).json({
@@ -313,7 +337,11 @@ app.delete('/api/documentos/:id', async (solicitud, respuesta) => {
  * Se asume la tabla usuarios con columnas: id_usuario, nombre_completo, correo, contraseña
  */
 app.get('/api/usuarios', async (_solicitud, respuesta) => {
-    const pool = obtenerPool();
+    const pool = obtenerPoolParaSolicitud(respuesta);
+
+    if (!pool) {
+        return;
+    }
 
     try {
         const {
@@ -347,7 +375,11 @@ app.get('/api/usuarios', async (_solicitud, respuesta) => {
  */
 app.post('/api/usuarios', async (solicitud, respuesta) => {
     const { nombre, correo, contrasena } = solicitud.body || {};
-    const pool = obtenerPool();
+    const pool = obtenerPoolParaSolicitud(respuesta);
+
+    if (!pool) {
+        return;
+    }
 
     if (!nombre || !correo || !contrasena) {
         return respuesta.status(400).json({
@@ -415,7 +447,11 @@ app.post('/api/usuarios', async (solicitud, respuesta) => {
 app.put('/api/usuarios/:id', async (solicitud, respuesta) => {
     const { id } = solicitud.params;
     const { nombre, correo, contrasena } = solicitud.body || {};
-    const pool = obtenerPool();
+    const pool = obtenerPoolParaSolicitud(respuesta);
+
+    if (!pool) {
+        return;
+    }
 
     if (!id || !nombre || !correo) {
         return respuesta.status(400).json({
@@ -474,7 +510,11 @@ app.put('/api/usuarios/:id', async (solicitud, respuesta) => {
  */
 app.delete('/api/usuarios/:id', async (solicitud, respuesta) => {
     const { id } = solicitud.params;
-    const pool = obtenerPool();
+    const pool = obtenerPoolParaSolicitud(respuesta);
+
+    if (!pool) {
+        return;
+    }
 
     if (!id) {
         return respuesta.status(400).json({
@@ -566,7 +606,11 @@ app.get('/api/estado-bd', async (_solicitud, respuesta) => {
  */
 app.post('/api/autenticacion', async (solicitud, respuesta) => {
     const { correo, contrasena } = solicitud.body || {};
-    const pool = obtenerPool();
+    const pool = obtenerPoolParaSolicitud(respuesta);
+
+    if (!pool) {
+        return;
+    }
 
     if (!correo || !contrasena) {
         return respuesta.status(400).json({
