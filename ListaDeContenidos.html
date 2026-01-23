@@ -838,7 +838,8 @@
         const enlaceGestionUsuarios = document.getElementById('enlace-gestion-usuarios');
         const parametrosBusqueda = new URLSearchParams(window.location.search);
         const apiPersonalizada = parametrosBusqueda.get('api');
-        const esLiveServer = origenActual.includes('127.0.0.1:5500') || origenActual.includes('localhost:5500');
+        const supabaseUrl = 'https://zbswbiwkpormtzxsnrnq.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpic3diaXdrcG9ybXR6eHNucm5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTYzODgsImV4cCI6MjA4NDY5MjM4OH0.8MZhBl3SvBACrzz1hWmaZ0Rs3Ep-DyKHx0O6i9MqrQE';
         const baseApi = determinarBaseApi(apiPersonalizada);
         const claveSesionAutenticada = 'usuario_autenticado';
         const claveDatosUsuario = 'usuario_datos';
@@ -861,20 +862,20 @@
             document.body.classList.remove('sin-scroll');
         }
 
-        // Devuelve la ruta completa hacia la API respetando el origen del servidor backend.
+        // Devuelve la ruta completa hacia la API, usando Supabase como base principal.
         function construirRutaApi(ruta) {
+            if (/^https?:\/\//i.test(ruta)) {
+                return ruta;
+            }
             return `${baseApi}${ruta}`;
         }
 
-        // Permite definir la API mediante parámetro (?api=http://localhost:4000) o por defecto al backend local.
+        // Permite sobrescribir la URL de Supabase con el parámetro ?api si se necesita.
         function determinarBaseApi(apiDefinida) {
             if (apiDefinida) {
                 return normalizarBaseApi(apiDefinida);
             }
-            if (esLiveServer) {
-                return 'http://localhost:3000';
-            }
-            return normalizarBaseApi(origenActual);
+            return normalizarBaseApi(supabaseUrl);
         }
 
         // Elimina la barra final para evitar rutas duplicadas al construir los endpoints.
@@ -1009,7 +1010,22 @@
             return `${tituloNormalizado || 'documento'}.pdf`;
         }
 
-        // Centraliza las llamadas a la API y muestra un mensaje claro cuando el servidor no responde.
+        // Construye URLs de Supabase para consultar tablas con la API REST.
+        function construirRutaSupabase(tabla, parametros = new URLSearchParams()) {
+            const query = parametros.toString();
+            const sufijo = query ? `?${query}` : '';
+            return `${baseApi}/rest/v1/${tabla}${sufijo}`;
+        }
+
+        // Encabezados base para autenticarse contra Supabase.
+        function obtenerEncabezadosSupabase() {
+            return {
+                apikey: supabaseAnonKey,
+                Authorization: `Bearer ${supabaseAnonKey}`
+            };
+        }
+
+        // Centraliza las llamadas a la API y muestra un mensaje claro cuando la API no responde.
         async function solicitarApi(ruta, opciones = {}, mensajeConexion) {
             const url = construirRutaApi(ruta);
             try {
@@ -1017,7 +1033,7 @@
                 const datos = await respuesta.json().catch(() => ({}));
                 return { respuesta, datos };
             } catch (_error) {
-                const mensaje = mensajeConexion || 'No se pudo contactar el servidor. Verifique que esté en ejecución y que el puerto configurado sea correcto (puede ajustarlo con el parámetro ?api=http://localhost:PUERTO).';
+                const mensaje = mensajeConexion || 'No se pudo contactar la API de Supabase. Verifique la URL y la clave pública configuradas.';
                 throw new Error(mensaje);
             }
         }
@@ -1198,90 +1214,163 @@
             }
         }
 
-        // Envía las credenciales al servidor usando el correo como identificador.
+        // Envía las credenciales consultando la tabla usuarios en Supabase.
         async function autenticarUsuario(correo, contrasena) {
+            const parametros = new URLSearchParams();
+            parametros.set('select', '*');
+            parametros.set('correo', `eq.${correo}`);
+            parametros.set('limit', '1');
+            const url = construirRutaSupabase('usuarios', parametros);
+
             const { respuesta, datos } = await solicitarApi(
-                '/api/autenticacion',
+                url,
                 {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ correo, contrasena })
+                    headers: obtenerEncabezadosSupabase()
                 },
-                'No se pudo contactar el servidor de autenticación. Asegúrese de que el backend esté activo y que el puerto de la API sea correcto.'
+                'No se pudo contactar la API de Supabase para validar el ingreso.'
             );
 
-            if (!respuesta.ok || !datos.exito) {
-                const mensaje = datos.mensaje || 'Las credenciales no son válidas.';
-                throw new Error(mensaje);
+            if (!respuesta.ok || !Array.isArray(datos) || datos.length === 0) {
+                throw new Error('Las credenciales no son válidas.');
             }
-            return datos;
+
+            const usuario = datos[0];
+            const claveRegistrada = usuario.contrasena || usuario.password_hash || '';
+
+            if (claveRegistrada !== contrasena) {
+                throw new Error('Las credenciales no son válidas.');
+            }
+
+            return {
+                exito: true,
+                usuario: {
+                    id: usuario.id || usuario.id_usuario,
+                    correo: usuario.correo,
+                    nombre_completo: usuario.nombre || usuario.nombre_completo || usuario.usuario || usuario.correo
+                }
+            };
         }
 
         async function obtenerDocumentosPorTipo(tipo) {
+            const parametros = new URLSearchParams();
+            parametros.set('select', 'id,titulo,descripcion,url,tipo');
+            parametros.set('tipo', `eq.${tipo}`);
+            parametros.set('order', 'titulo.asc');
+            const url = construirRutaSupabase('documentos', parametros);
+
             const { respuesta, datos } = await solicitarApi(
-                `/api/documentos?tipo=${encodeURIComponent(tipo)}`,
-                {},
-                'No se pudo contactar el servidor para obtener los documentos. Confirme que la API está encendida o ajuste el puerto con el parámetro ?api=http://localhost:PUERTO.'
+                url,
+                {
+                    headers: obtenerEncabezadosSupabase()
+                },
+                'No se pudo contactar la API de Supabase para obtener los documentos.'
             );
 
-            if (!respuesta.ok || !datos.exito) {
-                const mensaje = datos.mensaje || 'No se pudieron obtener los documentos.';
-                throw new Error(mensaje);
+            if (!respuesta.ok || !Array.isArray(datos)) {
+                throw new Error('No se pudieron obtener los documentos.');
             }
 
-            return Array.isArray(datos.documentos) ? datos.documentos : [];
+            return datos.map((documento) => ({
+                id: documento.id,
+                titulo: documento.titulo,
+                descripcion: documento.descripcion,
+                url: documento.url,
+                tipo: documento.tipo
+            }));
         }
 
         async function crearDocumento(documento) {
+            const url = construirRutaSupabase('documentos');
+            const payload = {
+                titulo: documento.titulo,
+                descripcion: documento.descripcion || null,
+                url: documento.url,
+                tipo: documento.tipo
+            };
+
             const { respuesta, datos } = await solicitarApi(
-                '/api/documentos',
+                url,
                 {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(documento)
+                    headers: {
+                        ...obtenerEncabezadosSupabase(),
+                        'Content-Type': 'application/json',
+                        Prefer: 'return=representation'
+                    },
+                    body: JSON.stringify(payload)
                 },
-                'No se pudo contactar el servidor para crear el documento. Confirme que la API esté encendida.'
+                'No se pudo contactar la API de Supabase para crear el documento.'
             );
 
-            if (!respuesta.ok || !datos.exito) {
-                const mensaje = datos.mensaje || 'No se pudo crear el documento.';
-                throw new Error(mensaje);
+            if (!respuesta.ok || !Array.isArray(datos) || datos.length === 0) {
+                throw new Error('No se pudo crear el documento.');
             }
 
-            return datos.documento;
+            const documentoCreado = datos[0];
+            return {
+                id: documentoCreado.id,
+                titulo: documentoCreado.titulo,
+                descripcion: documentoCreado.descripcion,
+                url: documentoCreado.url,
+                tipo: documentoCreado.tipo
+            };
         }
 
         async function actualizarDocumento(id, documento) {
+            const parametros = new URLSearchParams();
+            parametros.set('id', `eq.${id}`);
+            const url = construirRutaSupabase('documentos', parametros);
+            const payload = {
+                titulo: documento.titulo,
+                descripcion: documento.descripcion || null,
+                url: documento.url,
+                tipo: documento.tipo
+            };
+
             const { respuesta, datos } = await solicitarApi(
-                `/api/documentos/${encodeURIComponent(id)}`,
+                url,
                 {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(documento)
+                    method: 'PATCH',
+                    headers: {
+                        ...obtenerEncabezadosSupabase(),
+                        'Content-Type': 'application/json',
+                        Prefer: 'return=representation'
+                    },
+                    body: JSON.stringify(payload)
                 },
-                'No se pudo contactar el servidor para actualizar el documento. Confirme que la API esté encendida.'
+                'No se pudo contactar la API de Supabase para actualizar el documento.'
             );
 
-            if (!respuesta.ok || !datos.exito) {
-                const mensaje = datos.mensaje || 'No se pudo actualizar el documento.';
-                throw new Error(mensaje);
+            if (!respuesta.ok || !Array.isArray(datos) || datos.length === 0) {
+                throw new Error('No se pudo actualizar el documento.');
             }
 
-            return datos.documento;
+            const documentoActualizado = datos[0];
+            return {
+                id: documentoActualizado.id,
+                titulo: documentoActualizado.titulo,
+                descripcion: documentoActualizado.descripcion,
+                url: documentoActualizado.url,
+                tipo: documentoActualizado.tipo
+            };
         }
 
         async function eliminarDocumento(id) {
-            const { respuesta, datos } = await solicitarApi(
-                `/api/documentos/${encodeURIComponent(id)}`,
-                { method: 'DELETE' },
-                'No se pudo contactar el servidor para eliminar el documento. Confirme que la API esté encendida.'
+            const parametros = new URLSearchParams();
+            parametros.set('id', `eq.${id}`);
+            const url = construirRutaSupabase('documentos', parametros);
+
+            const { respuesta } = await solicitarApi(
+                url,
+                {
+                    method: 'DELETE',
+                    headers: obtenerEncabezadosSupabase()
+                },
+                'No se pudo contactar la API de Supabase para eliminar el documento.'
             );
 
-            if (!respuesta.ok || !datos.exito) {
-                const mensaje = datos.mensaje || 'No se pudo eliminar el documento.';
-                throw new Error(mensaje);
+            if (!respuesta.ok) {
+                throw new Error('No se pudo eliminar el documento.');
             }
         }
 
