@@ -1,7 +1,8 @@
 const path = require('path');
 const express = require('express');
 const { obtenerPool, probarConexion, hayConfiguracionBaseDatos } = require('./configuracion/conexionBaseDatos');
-const supabase = require('./configuracion/supabaseClient');
+const supabase = require("./configuracion/supabaseClient");
+
 
 const app = express();
 // Sirve todos los archivos estáticos desde la raíz del proyecto
