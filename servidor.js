@@ -170,422 +170,214 @@ function obtenerPoolParaSolicitud(respuesta) {
 }
 
 
-/**
- * Obtiene los documentos almacenados en la base de datos filtrando por tipo si corresponde.
- * Se mapea la estructura de la API (id, titulo, descripcion, url, tipo) a la tabla documentos:
- * id_documento, titulo_documento, descripcion_documento, documento, tipo_documento.
- */
-app.get('/api/documentos', async (solicitud, respuesta) => {
-    const tipo = solicitud.query.tipo || 'unidades';
-    const pool = obtenerPoolParaSolicitud(respuesta);
-
-    if (!pool) {
-        return;
-    }
-
+// LISTAR DOCUMENTOS (opcionalmente por tipo)
+app.get("/api/documentos", async (req, res) => {
     try {
-        const consulta = `
-            SELECT id_documento AS id,
-                   titulo_documento AS titulo,
-                   descripcion_documento AS descripcion,
-                   documento AS url,
-                   tipo_documento AS tipo
-            FROM documentos
-            WHERE ($1::text IS NULL OR tipo_documento = $1)
-            ORDER BY titulo_documento ASC
-        `;
-        const { rows } = await pool.query(consulta, [tipo]);
-        respuesta.json({ exito: true, documentos: rows });
-    } catch (error) {
-        console.error('Error al obtener documentos:', error);
-        respuesta.status(500).json({
-            exito: false,
-            mensaje: 'No se pudieron obtener los documentos, intente nuevamente.',
-            detalle: error.message
-        });
-    }
-});
+        const tipo = (req.query.tipo || "").toString().trim();
 
+        let q = supabase
+            .from("documentos")
+            .select("id_documento, titulo_documento, descripcion_documento, documento, tipo_documento")
+            .order("id_documento", { ascending: true });
 
-/**
- * Registra un documento en la base de datos.
- * documento corresponde al archivo en sí (ruta, URL o base64) enviado desde el formulario.
- */
-app.post('/api/documentos', async (solicitud, respuesta) => {
-    const { titulo, descripcion, url, tipo } = solicitud.body || {};
-    const pool = obtenerPoolParaSolicitud(respuesta);
-
-    if (!pool) {
-        return;
-    }
-
-    if (!titulo || !url || !tipo) {
-        return respuesta.status(400).json({
-            exito: false,
-            mensaje: 'Debe proporcionar título, URL y tipo del documento.'
-        });
-    }
-
-    try {
-        const consulta = `
-            INSERT INTO documentos (titulo_documento, descripcion_documento, documento, tipo_documento)
-            VALUES ($1, $2, $3, $4)
-            RETURNING id_documento AS id,
-                      titulo_documento AS titulo,
-                      descripcion_documento AS descripcion,
-                      documento AS url,
-                      tipo_documento AS tipo
-        `;
-        const { rows } = await pool.query(consulta, [titulo, descripcion || null, url, tipo]);
-        respuesta.status(201).json({ exito: true, documento: rows[0] });
-    } catch (error) {
-        console.error('Error al crear documento:', error);
-        respuesta.status(500).json({
-            exito: false,
-            mensaje: 'No se pudo crear el documento, intente nuevamente.',
-            detalle: error.message
-        });
-    }
-});
-
-/**
- * Actualiza un documento existente.
- */
-app.put('/api/documentos/:id', async (solicitud, respuesta) => {
-    const { id } = solicitud.params;
-    const { titulo, descripcion, url, tipo } = solicitud.body || {};
-    const pool = obtenerPoolParaSolicitud(respuesta);
-
-    if (!pool) {
-        return;
-    }
-
-    if (!id || !titulo || !url || !tipo) {
-        return respuesta.status(400).json({
-            exito: false,
-            mensaje: 'Debe proporcionar ID, título, URL y tipo del documento.'
-        });
-    }
-
-    try {
-        const consulta = `
-            UPDATE documentos
-            SET titulo_documento = $1,
-                descripcion_documento = $2,
-                documento = $3,
-                tipo_documento = $4
-            WHERE id_documento = $5
-            RETURNING id_documento AS id,
-                      titulo_documento AS titulo,
-                      descripcion_documento AS descripcion,
-                      documento AS url,
-                      tipo_documento AS tipo
-        `;
-        const { rows } = await pool.query(consulta, [titulo, descripcion || null, url, tipo, id]);
-
-        if (rows.length === 0) {
-            return respuesta.status(404).json({
-                exito: false,
-                mensaje: 'No se encontró el documento solicitado.'
-            });
+        if (tipo) {
+            q = q.eq("tipo_documento", tipo);
         }
 
-        respuesta.json({ exito: true, documento: rows[0] });
-    } catch (error) {
-        console.error('Error al actualizar documento:', error);
-        respuesta.status(500).json({
-            exito: false,
-            mensaje: 'No se pudo actualizar el documento, intente nuevamente.',
-            detalle: error.message
-        });
+        const { data, error } = await q;
+        if (error) {
+            return res.status(500).json({ exito: false, mensaje: error.message });
+        }
+        return res.json({ exito: true, documentos: data });
+    } catch (e) {
+        return res.status(500).json({ exito: false, mensaje: String(e) });
     }
 });
 
-/**
- * Elimina un documento por su ID.
- */
-app.delete('/api/documentos/:id', async (solicitud, respuesta) => {
-    const { id } = solicitud.params;
-    const pool = obtenerPoolParaSolicitud(respuesta);
-
-    if (!pool) {
-        return;
-    }
-
-    if (!id) {
-        return respuesta.status(400).json({
-            exito: false,
-            mensaje: 'Debe proporcionar el ID del documento.'
-        });
-    }
-
+// CREAR DOCUMENTO
+app.post("/api/documentos", async (req, res) => {
     try {
-        const consulta = `
-            DELETE FROM documentos
-            WHERE id_documento = $1
-            RETURNING id_documento AS id
-        `;
-        const { rows } = await pool.query(consulta, [id]);
-
-        if (rows.length === 0) {
-            return respuesta.status(404).json({
-                exito: false,
-                mensaje: 'No se encontró el documento solicitado.'
-            });
+        const { titulo_documento, descripcion_documento, documento, tipo_documento } = req.body || {};
+        if (!titulo_documento || !documento || !tipo_documento) {
+            return res.status(400).json({ exito: false, mensaje: "Faltan campos obligatorios." });
         }
 
-        respuesta.json({ exito: true });
-    } catch (error) {
-        console.error('Error al eliminar documento:', error);
-        respuesta.status(500).json({
-            exito: false,
-            mensaje: 'No se pudo eliminar el documento, intente nuevamente.',
-            detalle: error.message
-        });
-    }
-});
+        const { data, error } = await supabase
+            .from("documentos")
+            .insert([{
+                titulo_documento,
+                descripcion_documento: descripcion_documento || "",
+                documento,
+                tipo_documento
+            }])
+            .select("id_documento, titulo_documento, descripcion_documento, documento, tipo_documento")
+            .single();
 
-/**
- * Obtiene todos los usuarios registrados.
- * Se asume la tabla usuarios con columnas: id_usuario, nombre_completo, correo, contraseña
- */
-app.get('/api/usuarios', async (_solicitud, respuesta) => {
-    const pool = obtenerPoolParaSolicitud(respuesta);
-
-    if (!pool) {
-        return;
-    }
-
-    try {
-        const {
-            columnaId,
-            columnaNombre,
-            columnaCorreo,
-            columnaContrasena
-        } = await obtenerMapaUsuarios(pool);
-        const consulta = `
-            SELECT ${columnaId} AS id,
-                   ${columnaNombre} AS nombre,
-                   ${columnaCorreo ? `${columnaCorreo} AS correo` : "NULL::text AS correo"},
-                   ${columnaContrasena} AS contrasena
-            FROM usuarios
-            ORDER BY ${columnaNombre} ASC
-        `;
-        const { rows } = await pool.query(consulta);
-        respuesta.json({ exito: true, usuarios: rows });
-    } catch (error) {
-        console.error('Error al obtener usuarios:', error);
-        respuesta.status(500).json({
-            exito: false,
-            mensaje: 'No se pudieron obtener los usuarios, intente nuevamente.',
-            detalle: error.message
-        });
-    }
-});
-
-/**
- * Registra un usuario en la base de datos.
- */
-app.post('/api/usuarios', async (solicitud, respuesta) => {
-    const { nombre, correo, contrasena } = solicitud.body || {};
-    const pool = obtenerPoolParaSolicitud(respuesta);
-
-    if (!pool) {
-        return;
-    }
-
-    if (!nombre || !correo || !contrasena) {
-        return respuesta.status(400).json({
-            exito: false,
-            mensaje: 'Debe proporcionar nombre, correo y contraseña.'
-        });
-    }
-
-    if (nombreContieneNumeros(nombre)) {
-        return respuesta.status(400).json({
-            exito: false,
-            mensaje: 'El nombre no puede contener números.'
-        });
-    }
-
-    try {
-        const {
-            columnaId,
-            columnaNombre,
-            columnaCorreo
-        } = await obtenerMapaUsuarios(pool);
-
-        const columnaCorreoUsada = columnaCorreo || 'correo';
-        // Valida el correo antes de insertar para evitar consumir un ID si existe un duplicado.
-        const consultaExistente = `
-            SELECT 1
-            FROM usuarios
-            WHERE ${columnaCorreoUsada} = $1
-            LIMIT 1
-        `;
-        const { rows: coincidencias } = await pool.query(consultaExistente, [correo]);
-
-        if (coincidencias.length > 0) {
-            return respuesta.status(409).json({
-                exito: false,
-                mensaje: 'El correo ya está registrado.'
-            });
+        if (error) {
+            return res.status(500).json({ exito: false, mensaje: error.message });
         }
-        const consulta = `
-            INSERT INTO usuarios (${columnaNombre}, ${columnaCorreoUsada}, contrasena)
-            VALUES ($1, $2, $3)
-            RETURNING ${columnaId} AS id,
-                      ${columnaNombre} AS nombre,
-                      ${columnaCorreoUsada} AS correo
-        `;
-        const { rows } = await pool.query(consulta, [nombre, correo, contrasena]);
-        respuesta.status(201).json({
-            exito: true,
-            usuario: rows[0]
-        });
-    } catch (error) {
-        console.error('Error al crear usuario:', error);
-        respuesta.status(500).json({
-            exito: false,
-            mensaje: 'No se pudo crear el usuario, intente nuevamente.',
-            detalle: error.message
-        });
+        return res.json({ exito: true, documento: data });
+    } catch (e) {
+        return res.status(500).json({ exito: false, mensaje: String(e) });
     }
 });
 
-/**
- * Actualiza un usuario existente.
- * Si no se envía contraseña, se conserva la clave registrada actualmente.
- */
-app.put('/api/usuarios/:id', async (solicitud, respuesta) => {
-    const { id } = solicitud.params;
-    const { nombre, correo, contrasena } = solicitud.body || {};
-    const pool = obtenerPoolParaSolicitud(respuesta);
-
-    if (!pool) {
-        return;
-    }
-
-    if (!id || !nombre || !correo) {
-        return respuesta.status(400).json({
-            exito: false,
-            mensaje: 'Debe proporcionar ID, nombre y correo.'
-        });
-    }
-
-    if (nombreContieneNumeros(nombre)) {
-        return respuesta.status(400).json({
-            exito: false,
-            mensaje: 'El nombre no puede contener números.'
-        });
-    }
-
+// EDITAR DOCUMENTO
+app.put("/api/documentos/:id", async (req, res) => {
     try {
-        const {
-            columnaId,
-            columnaNombre,
-            columnaCorreo
-        } = await obtenerMapaUsuarios(pool);
-
-        const columnaCorreoUsada = columnaCorreo || 'correo';
-        const consulta = `
-            UPDATE usuarios
-            SET ${columnaNombre} = $1,
-                ${columnaCorreoUsada} = $2,
-                contrasena = COALESCE($3, contrasena)
-            WHERE ${columnaId} = $4
-            RETURNING ${columnaId} AS id,
-                      ${columnaNombre} AS nombre,
-                      ${columnaCorreoUsada} AS correo
-        `;
-        const { rows } = await pool.query(consulta, [nombre, correo, contrasena || null, id]);
-
-        if (rows.length === 0) {
-            return respuesta.status(404).json({
-                exito: false,
-                mensaje: 'No se encontró el usuario solicitado.'
-            });
+        const id = Number(req.params.id);
+        if (!id) {
+            return res.status(400).json({ exito: false, mensaje: "ID inválido." });
         }
 
-        respuesta.json({ exito: true, usuario: rows[0] });
-    } catch (error) {
-        console.error('Error al actualizar usuario:', error);
-        respuesta.status(500).json({
-            exito: false,
-            mensaje: 'No se pudo actualizar el usuario, intente nuevamente.',
-            detalle: error.message
-        });
+        const { titulo_documento, descripcion_documento, documento, tipo_documento } = req.body || {};
+        const payload = {};
+        if (titulo_documento != null) {
+            payload.titulo_documento = titulo_documento;
+        }
+        if (descripcion_documento != null) {
+            payload.descripcion_documento = descripcion_documento;
+        }
+        if (documento != null && String(documento).trim() !== "") {
+            payload.documento = documento;
+        }
+        if (tipo_documento != null) {
+            payload.tipo_documento = tipo_documento;
+        }
+
+        const { data, error } = await supabase
+            .from("documentos")
+            .update(payload)
+            .eq("id_documento", id)
+            .select("id_documento, titulo_documento, descripcion_documento, documento, tipo_documento")
+            .single();
+
+        if (error) {
+            return res.status(500).json({ exito: false, mensaje: error.message });
+        }
+        return res.json({ exito: true, documento: data });
+    } catch (e) {
+        return res.status(500).json({ exito: false, mensaje: String(e) });
     }
 });
 
-/**
- * Elimina un usuario por su ID.
- */
-app.delete('/api/usuarios/:id', async (solicitud, respuesta) => {
-    const { id } = solicitud.params;
-    const pool = obtenerPoolParaSolicitud(respuesta);
-
-    if (!pool) {
-        return;
-    }
-
-    if (!id) {
-        return respuesta.status(400).json({
-            exito: false,
-            mensaje: 'Debe proporcionar el ID del usuario.'
-        });
-    }
-
+// ELIMINAR DOCUMENTO
+app.delete("/api/documentos/:id", async (req, res) => {
     try {
-        const { columnaId } = await obtenerMapaUsuarios(pool);
-        const nombreSecuencia = `usuarios_${columnaId}_seq`;
-        const cliente = await pool.connect();
-
-        try {
-            await cliente.query('BEGIN');
-            const consulta = `
-                DELETE FROM usuarios
-                WHERE ${columnaId} = $1
-                RETURNING ${columnaId} AS id
-            `;
-            const { rows } = await cliente.query(consulta, [id]);
-
-            if (rows.length === 0) {
-                await cliente.query('ROLLBACK');
-                return respuesta.status(404).json({
-                    exito: false,
-                    mensaje: 'No se encontró el usuario solicitado.'
-                });
-            }
-
-            // Mantiene la numeración continua al compactar IDs posteriores al eliminado.
-            await cliente.query(`
-                UPDATE usuarios
-                SET ${columnaId} = ${columnaId} - 1
-                WHERE ${columnaId} > $1
-            `, [id]);
-            await cliente.query(`
-                SELECT setval(
-                    '${nombreSecuencia}',
-                    COALESCE((SELECT MAX(${columnaId}) FROM usuarios), 0)
-                )
-            `);
-            await cliente.query('COMMIT');
-            respuesta.json({ exito: true });
-        } catch (error) {
-            await cliente.query('ROLLBACK');
-            throw error;
-        } finally {
-            cliente.release();
+        const id = Number(req.params.id);
+        if (!id) {
+            return res.status(400).json({ exito: false, mensaje: "ID inválido." });
         }
 
-    } catch (error) {
-        console.error('Error al eliminar usuario:', error);
-        respuesta.status(500).json({
-            exito: false,
-            mensaje: 'No se pudo eliminar el usuario, intente nuevamente.',
-            detalle: error.message
-        });
+        const { error } = await supabase
+            .from("documentos")
+            .delete()
+            .eq("id_documento", id);
+
+        if (error) {
+            return res.status(500).json({ exito: false, mensaje: error.message });
+        }
+        return res.json({ exito: true });
+    } catch (e) {
+        return res.status(500).json({ exito: false, mensaje: String(e) });
+    }
+});
+
+// LISTAR USUARIOS
+app.get("/api/usuarios", async (_req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from("usuarios")
+            .select("id_usuario, nombre, correo")
+            .order("id_usuario", { ascending: true });
+
+        if (error) {
+            return res.status(500).json({ exito: false, mensaje: error.message });
+        }
+        return res.json({ exito: true, usuarios: data });
+    } catch (e) {
+        return res.status(500).json({ exito: false, mensaje: String(e) });
+    }
+});
+
+// CREAR USUARIO
+app.post("/api/usuarios", async (req, res) => {
+    try {
+        const { nombre, correo, contrasena } = req.body || {};
+        if (!nombre || !correo || !contrasena) {
+            return res.status(400).json({ exito: false, mensaje: "Faltan campos obligatorios." });
+        }
+
+        const { data, error } = await supabase
+            .from("usuarios")
+            .insert([{ nombre, correo, contrasena }])
+            .select("id_usuario, nombre, correo")
+            .single();
+
+        if (error) {
+            return res.status(500).json({ exito: false, mensaje: error.message });
+        }
+        return res.json({ exito: true, usuario: data });
+    } catch (e) {
+        return res.status(500).json({ exito: false, mensaje: String(e) });
+    }
+});
+
+// EDITAR USUARIO
+app.put("/api/usuarios/:id", async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        const { nombre, correo, contrasena } = req.body || {};
+        if (!id) {
+            return res.status(400).json({ exito: false, mensaje: "ID inválido." });
+        }
+
+        const payload = {};
+        if (nombre != null) {
+            payload.nombre = nombre;
+        }
+        if (correo != null) {
+            payload.correo = correo;
+        }
+        if (contrasena != null && String(contrasena).trim() !== "") {
+            payload.contrasena = contrasena;
+        }
+
+        const { data, error } = await supabase
+            .from("usuarios")
+            .update(payload)
+            .eq("id_usuario", id)
+            .select("id_usuario, nombre, correo")
+            .single();
+
+        if (error) {
+            return res.status(500).json({ exito: false, mensaje: error.message });
+        }
+        return res.json({ exito: true, usuario: data });
+    } catch (e) {
+        return res.status(500).json({ exito: false, mensaje: String(e) });
+    }
+});
+
+// ELIMINAR USUARIO
+app.delete("/api/usuarios/:id", async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        if (!id) {
+            return res.status(400).json({ exito: false, mensaje: "ID inválido." });
+        }
+
+        const { error } = await supabase
+            .from("usuarios")
+            .delete()
+            .eq("id_usuario", id);
+
+        if (error) {
+            return res.status(500).json({ exito: false, mensaje: error.message });
+        }
+        return res.json({ exito: true });
+    } catch (e) {
+        return res.status(500).json({ exito: false, mensaje: String(e) });
     }
 });
 
