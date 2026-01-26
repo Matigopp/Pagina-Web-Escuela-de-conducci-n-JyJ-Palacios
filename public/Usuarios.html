@@ -349,11 +349,6 @@
         const mensajeFormulario = document.getElementById('mensaje-formulario');
         const botonCancelar = document.getElementById('btn-cancelar');
         const enlaceGestionUsuarios = document.getElementById('enlace-gestion-usuarios');
-        const parametrosBusqueda = new URLSearchParams(window.location.search);
-        const apiPersonalizada = parametrosBusqueda.get('api');
-        const supabaseUrl = 'https://zbswbiwkpormtzxsnrnq.supabase.co';
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpic3diaXdrcG9ybXR6eHNucm5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTYzODgsImV4cCI6MjA4NDY5MjM4OH0.8MZhBl3SvBACrzz1hWmaZ0Rs3Ep-DyKHx0O6i9MqrQE';
-        const baseApi = determinarBaseApi(apiPersonalizada);
         const claveDatosUsuario = 'usuario_datos';
         const correoAdmin = 'admin@gmail.com';
 
@@ -396,52 +391,17 @@
             }
         }
 
-        // Define la URL de la API, permitiendo sobrescribirla con el parámetro ?api si es necesario.
-        function determinarBaseApi(apiDefinida) {
-            if (apiDefinida) {
-                return normalizarBaseApi(apiDefinida);
-            }
-            return normalizarBaseApi(supabaseUrl);
-        }
-
-        function normalizarBaseApi(api) {
-            if (!api) {
-                return '';
-            }
-            return api.endsWith('/') ? api.slice(0, -1) : api;
-        }
-
-        function construirRutaApi(ruta) {
-            if (/^https?:\/\//i.test(ruta)) {
-                return ruta;
-            }
-            return `${baseApi}${ruta}`;
-        }
-
-        // Construye URLs de Supabase para consultar tablas con la API REST.
-        function construirRutaSupabase(tabla, parametros = new URLSearchParams()) {
-            const query = parametros.toString();
-            const sufijo = query ? `?${query}` : '';
-            return `${baseApi}/rest/v1/${tabla}${sufijo}`;
-        }
-
-        // Encabezados base para autenticarse contra Supabase.
-        function obtenerEncabezadosSupabase() {
-            return {
-                apikey: supabaseAnonKey,
-                Authorization: `Bearer ${supabaseAnonKey}`
-            };
-        }
-
-        // Centraliza las llamadas a Supabase para mostrar errores coherentes.
+        // Centraliza las respuestas de la API propia y valida el indicador de éxito.
         async function solicitarApi(ruta, opciones = {}, mensajeConexion) {
-            const url = construirRutaApi(ruta);
             try {
-                const respuesta = await fetch(url, opciones);
+                const respuesta = await fetch(ruta, opciones);
                 const datos = await respuesta.json().catch(() => ({}));
-                return { respuesta, datos };
+                if (!respuesta.ok || datos.exito === false) {
+                    throw new Error(datos.mensaje || 'No se pudo completar la solicitud.');
+                }
+                return datos;
             } catch (_error) {
-                const mensaje = mensajeConexion || 'No se pudo contactar la API de Supabase. Verifique la URL y la clave pública configuradas.';
+                const mensaje = mensajeConexion || 'No se pudo contactar la API de usuarios.';
                 throw new Error(mensaje);
             }
         }
@@ -517,29 +477,12 @@
             actualizarEstadoUsuarios('Cargando usuarios...');
 
             try {
-                const parametros = new URLSearchParams();
-                parametros.set('select', 'id,nombre,correo,contrasena');
-                parametros.set('order', 'nombre.asc');
-                const url = construirRutaSupabase('usuarios', parametros);
-
-                const { respuesta, datos } = await solicitarApi(
-                    url,
-                    {
-                        headers: obtenerEncabezadosSupabase()
-                    },
-                    'No se pudo contactar la API de Supabase para obtener los usuarios.'
+                const datos = await solicitarApi(
+                    '/api/usuarios',
+                    {},
+                    'No se pudo contactar la API de usuarios para obtener los usuarios.'
                 );
-
-                if (!respuesta.ok || !Array.isArray(datos)) {
-                    throw new Error('No se pudieron obtener los usuarios.');
-                }
-
-                const usuarios = datos.map((usuario) => ({
-                    id: usuario.id,
-                    nombre: usuario.nombre,
-                    correo: usuario.correo,
-                    contrasena: usuario.contrasena
-                }));
+                const usuarios = Array.isArray(datos.usuarios) ? datos.usuarios : [];
                 renderizarUsuarios(usuarios);
                 actualizarEstadoUsuarios('');
             } catch (error) {
@@ -549,32 +492,26 @@
         }
 
         async function crearUsuario(datosUsuario) {
-            const url = construirRutaSupabase('usuarios');
             const payload = {
                 nombre: datosUsuario.nombre,
                 correo: datosUsuario.correo,
                 contrasena: datosUsuario.contrasena
             };
 
-            const { respuesta, datos } = await solicitarApi(url, {
-                method: 'POST',
-                headers: {
-                    ...obtenerEncabezadosSupabase(),
-                    'Content-Type': 'application/json',
-                    Prefer: 'return=representation'
+            await solicitarApi(
+                '/api/usuarios',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
                 },
-                body: JSON.stringify(payload)
-            }, 'No se pudo contactar la API de Supabase para crear el usuario.');
-
-            if (!respuesta.ok || !Array.isArray(datos) || datos.length === 0) {
-                throw new Error('No se pudo crear el usuario.');
-            }
+                'No se pudo contactar la API de usuarios para crear el usuario.'
+            );
         }
 
         async function actualizarUsuario(id, datosUsuario) {
-            const parametros = new URLSearchParams();
-            parametros.set('id', `eq.${id}`);
-            const url = construirRutaSupabase('usuarios', parametros);
             const payload = {
                 nombre: datosUsuario.nombre,
                 correo: datosUsuario.correo
@@ -584,19 +521,17 @@
                 payload.contrasena = datosUsuario.contrasena;
             }
 
-            const { respuesta, datos } = await solicitarApi(url, {
-                method: 'PATCH',
-                headers: {
-                    ...obtenerEncabezadosSupabase(),
-                    'Content-Type': 'application/json',
-                    Prefer: 'return=representation'
+            await solicitarApi(
+                `/api/usuarios/${id}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
                 },
-                body: JSON.stringify(payload)
-            }, 'No se pudo contactar la API de Supabase para actualizar el usuario.');
-
-            if (!respuesta.ok || !Array.isArray(datos) || datos.length === 0) {
-                throw new Error('No se pudo actualizar el usuario.');
-            }
+                'No se pudo contactar la API de usuarios para actualizar el usuario.'
+            );
         }
 
         async function eliminarUsuario(id) {
@@ -610,18 +545,13 @@
             }
 
             try {
-                const parametros = new URLSearchParams();
-                parametros.set('id', `eq.${id}`);
-                const url = construirRutaSupabase('usuarios', parametros);
-
-                const { respuesta } = await solicitarApi(url, {
-                    method: 'DELETE',
-                    headers: obtenerEncabezadosSupabase()
-                }, 'No se pudo contactar la API de Supabase para eliminar el usuario.');
-
-                if (!respuesta.ok) {
-                    throw new Error('No se pudo eliminar el usuario.');
-                }
+                await solicitarApi(
+                    `/api/usuarios/${id}`,
+                    {
+                        method: 'DELETE'
+                    },
+                    'No se pudo contactar la API de usuarios para eliminar el usuario.'
+                );
 
                 await cargarUsuarios();
             } catch (error) {

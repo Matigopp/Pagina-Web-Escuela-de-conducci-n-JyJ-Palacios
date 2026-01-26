@@ -849,9 +849,7 @@
         const enlaceGestionUsuarios = document.getElementById('enlace-gestion-usuarios');
         const parametrosBusqueda = new URLSearchParams(window.location.search);
         const apiPersonalizada = parametrosBusqueda.get('api');
-        const supabaseUrl = 'https://zbswbiwkpormtzxsnrnq.supabase.co';
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpic3diaXdrcG9ybXR6eHNucm5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTYzODgsImV4cCI6MjA4NDY5MjM4OH0.8MZhBl3SvBACrzz1hWmaZ0Rs3Ep-DyKHx0O6i9MqrQE';
-        const baseApi = determinarBaseApi(apiPersonalizada);
+        const baseApi = apiPersonalizada ? normalizarBaseApi(apiPersonalizada) : '';
         const claveSesionAutenticada = 'usuario_autenticado';
         const claveDatosUsuario = 'usuario_datos';
         const correoAdmin = 'admin@gmail.com';
@@ -871,22 +869,6 @@
                 return;
             }
             document.body.classList.remove('sin-scroll');
-        }
-
-        // Devuelve la ruta completa hacia la API, usando Supabase como base principal.
-        function construirRutaApi(ruta) {
-            if (/^https?:\/\//i.test(ruta)) {
-                return ruta;
-            }
-            return `${baseApi}${ruta}`;
-        }
-
-        // Permite sobrescribir la URL de Supabase con el parámetro ?api si se necesita.
-        function determinarBaseApi(apiDefinida) {
-            if (apiDefinida) {
-                return normalizarBaseApi(apiDefinida);
-            }
-            return normalizarBaseApi(supabaseUrl);
         }
 
         // Elimina la barra final para evitar rutas duplicadas al construir los endpoints.
@@ -1021,30 +1003,17 @@
             return `${tituloNormalizado || 'documento'}.pdf`;
         }
 
-        // Construye URLs de Supabase para consultar tablas con la API REST.
-        function construirRutaSupabase(tabla, parametros = new URLSearchParams()) {
-            const query = parametros.toString();
-            const sufijo = query ? `?${query}` : '';
-            return `${baseApi}/rest/v1/${tabla}${sufijo}`;
-        }
-
-        // Encabezados base para autenticarse contra Supabase.
-        function obtenerEncabezadosSupabase() {
-            return {
-                apikey: supabaseAnonKey,
-                Authorization: `Bearer ${supabaseAnonKey}`
-            };
-        }
-
-        // Centraliza las llamadas a la API y muestra un mensaje claro cuando la API no responde.
+        // Centraliza las llamadas a la API propia y valida el indicador de éxito.
         async function solicitarApi(ruta, opciones = {}, mensajeConexion) {
-            const url = construirRutaApi(ruta);
             try {
-                const respuesta = await fetch(url, opciones);
+                const respuesta = await fetch(ruta, opciones);
                 const datos = await respuesta.json().catch(() => ({}));
-                return { respuesta, datos };
+                if (!respuesta.ok || datos.exito === false) {
+                    throw new Error(datos.mensaje || 'No se pudo completar la solicitud.');
+                }
+                return datos;
             } catch (_error) {
-                const mensaje = mensajeConexion || 'No se pudo contactar la API de Supabase. Verifique la URL y la clave pública configuradas.';
+                const mensaje = mensajeConexion || 'No se pudo contactar la API de documentos.';
                 throw new Error(mensaje);
             }
         }
@@ -1225,7 +1194,7 @@
             }
         }
 
-        // Envía las credenciales consultando la base en Supabase.
+        // Envía las credenciales al backend propio para validar el acceso.
         async function autenticarUsuario(correo, contrasena) {
             const respuesta = await fetch("/api/autenticacion", {
                 method: "POST",
@@ -1254,25 +1223,15 @@
 
 
         async function obtenerDocumentosPorTipo(tipo) {
-            const parametros = new URLSearchParams();
-            parametros.set('select', 'id,titulo,descripcion,url,tipo');
-            parametros.set('tipo', `eq.${tipo}`);
-            parametros.set('order', 'titulo.asc');
-            const url = construirRutaSupabase('documentos', parametros);
-
-            const { respuesta, datos } = await solicitarApi(
+            const url = `/api/documentos?tipo=${encodeURIComponent(tipo)}`;
+            const datos = await solicitarApi(
                 url,
-                {
-                    headers: obtenerEncabezadosSupabase()
-                },
-                'No se pudo contactar la API de Supabase para obtener los documentos.'
+                {},
+                'No se pudo contactar la API de documentos para obtener los documentos.'
             );
 
-            if (!respuesta.ok || !Array.isArray(datos)) {
-                throw new Error('No se pudieron obtener los documentos.');
-            }
-
-            return datos.map((documento) => ({
+            const documentos = Array.isArray(datos.documentos) ? datos.documentos : [];
+            return documentos.map((documento) => ({
                 id: documento.id,
                 titulo: documento.titulo,
                 descripcion: documento.descripcion,
@@ -1282,7 +1241,6 @@
         }
 
         async function crearDocumento(documento) {
-            const url = construirRutaSupabase('documentos');
             const payload = {
                 titulo: documento.titulo,
                 descripcion: documento.descripcion || null,
@@ -1290,25 +1248,21 @@
                 tipo: documento.tipo
             };
 
-            const { respuesta, datos } = await solicitarApi(
-                url,
+            const datos = await solicitarApi(
+                '/api/documentos',
                 {
                     method: 'POST',
                     headers: {
-                        ...obtenerEncabezadosSupabase(),
-                        'Content-Type': 'application/json',
-                        Prefer: 'return=representation'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 },
-                'No se pudo contactar la API de Supabase para crear el documento.'
+                'No se pudo contactar la API de documentos para crear el documento.'
             );
 
-            if (!respuesta.ok || !Array.isArray(datos) || datos.length === 0) {
-                throw new Error('No se pudo crear el documento.');
-            }
-
-            const documentoCreado = datos[0];
+            const documentoCreado = datos.documento
+                || (Array.isArray(datos.documentos) ? datos.documentos[0] : null)
+                || {};
             return {
                 id: documentoCreado.id,
                 titulo: documentoCreado.titulo,
@@ -1319,9 +1273,6 @@
         }
 
         async function actualizarDocumento(id, documento) {
-            const parametros = new URLSearchParams();
-            parametros.set('id', `eq.${id}`);
-            const url = construirRutaSupabase('documentos', parametros);
             const payload = {
                 titulo: documento.titulo,
                 descripcion: documento.descripcion || null,
@@ -1329,25 +1280,21 @@
                 tipo: documento.tipo
             };
 
-            const { respuesta, datos } = await solicitarApi(
-                url,
+            const datos = await solicitarApi(
+                `/api/documentos/${id}`,
                 {
-                    method: 'PATCH',
+                    method: 'PUT',
                     headers: {
-                        ...obtenerEncabezadosSupabase(),
-                        'Content-Type': 'application/json',
-                        Prefer: 'return=representation'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 },
-                'No se pudo contactar la API de Supabase para actualizar el documento.'
+                'No se pudo contactar la API de documentos para actualizar el documento.'
             );
 
-            if (!respuesta.ok || !Array.isArray(datos) || datos.length === 0) {
-                throw new Error('No se pudo actualizar el documento.');
-            }
-
-            const documentoActualizado = datos[0];
+            const documentoActualizado = datos.documento
+                || (Array.isArray(datos.documentos) ? datos.documentos[0] : null)
+                || {};
             return {
                 id: documentoActualizado.id,
                 titulo: documentoActualizado.titulo,
@@ -1358,22 +1305,13 @@
         }
 
         async function eliminarDocumento(id) {
-            const parametros = new URLSearchParams();
-            parametros.set('id', `eq.${id}`);
-            const url = construirRutaSupabase('documentos', parametros);
-
-            const { respuesta } = await solicitarApi(
-                url,
+            await solicitarApi(
+                `/api/documentos/${id}`,
                 {
-                    method: 'DELETE',
-                    headers: obtenerEncabezadosSupabase()
+                    method: 'DELETE'
                 },
-                'No se pudo contactar la API de Supabase para eliminar el documento.'
+                'No se pudo contactar la API de documentos para eliminar el documento.'
             );
-
-            if (!respuesta.ok) {
-                throw new Error('No se pudo eliminar el documento.');
-            }
         }
 
         function renderizarDocumentos(documentos) {
