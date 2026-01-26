@@ -1,6 +1,9 @@
 const path = require('path');
 const express = require('express');
 const { obtenerPool, probarConexion, hayConfiguracionBaseDatos } = require('./configuracion/conexionBaseDatos');
+const supabase = require('./configuracion/supabaseClient');
+
+const app = express();
 // Sirve todos los archivos estáticos desde la raíz del proyecto
 app.use(express.static(__dirname));
 
@@ -9,7 +12,6 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-const app = express();
 const puerto = Number(process.env.PUERTO_APP) || 3000;
 
 // Detecta si el proceso corre dentro del entorno de Vercel.
@@ -132,7 +134,8 @@ app.use((solicitud, respuesta, siguiente) => {
 app.use(express.static(path.join(__dirname)));
 
 const pool = obtenerPool();
-const debePrepararBaseDatos = !estaEnVercel() || hayConfiguracionBaseDatosEnEntorno;
+// En serverless evitamos tareas pesadas en el arranque para reducir errores en Vercel.
+const debePrepararBaseDatos = !estaEnVercel() && hayConfiguracionBaseDatosEnEntorno;
 
 if (debePrepararBaseDatos) {
     if (!pool) {
@@ -612,14 +615,17 @@ app.get('/api/estado-bd', async (_solicitud, respuesta) => {
  * Devuelve los datos básicos del usuario autenticado para mostrar en el cliente si se requiere.
  */
 app.post('/api/autenticacion', async (solicitud, respuesta) => {
-    const { correo, contrasena } = solicitud.body || {};
-    const pool = obtenerPoolParaSolicitud(respuesta);
+    const { correo, contrasena, password } = solicitud.body || {};
+    const clave = contrasena || password;
 
-    if (!pool) {
-        return;
+    if (!supabase) {
+        return respuesta.status(503).json({
+            exito: false,
+            mensaje: 'No hay configuración de Supabase disponible en este entorno.'
+        });
     }
 
-    if (!correo || !contrasena) {
+    if (!correo || !clave) {
         return respuesta.status(400).json({
             exito: false,
             mensaje: 'Debe proporcionar el correo y la contraseña.'
@@ -627,22 +633,20 @@ app.post('/api/autenticacion', async (solicitud, respuesta) => {
     }
 
     try {
-        const { columnaCorreo, columnaContrasena } = await obtenerMapaUsuarios(pool);
-        if (!columnaCorreo) {
+        const { data: usuarios, error } = await supabase
+            .from('usuarios')
+            .select('id,id_usuario,correo,contrasena,password_hash,nombre,nombre_completo,usuario')
+            .eq('correo', correo)
+            .limit(1);
+
+        if (error) {
             return respuesta.status(500).json({
                 exito: false,
-                mensaje: 'No se encontró una columna de correo para validar credenciales.'
+                mensaje: 'No se pudo validar el acceso en Supabase.',
+                detalle: error.message
             });
         }
-        // Obtiene el registro y usa la clave almacenada sin asumir un nombre de columna específico.
-        const consulta = `
-            SELECT *
-            FROM usuarios
-            WHERE ${columnaCorreo} = $1
-            LIMIT 1
-        `;
-        const { rows } = await pool.query(consulta, [correo]);
-        if (rows.length === 0) {
+        if (!usuarios || usuarios.length === 0) {
             return respuesta.status(401).json({
                 exito: false,
                 mensaje: 'Credenciales incorrectas, verifique sus datos.'
@@ -652,7 +656,7 @@ app.post('/api/autenticacion', async (solicitud, respuesta) => {
         const usuario = rows[0];
         const claveRegistrada = usuario[columnaContrasena] ?? usuario.contrasena ?? usuario.password_hash;
 
-        if (!claveRegistrada || claveRegistrada !== contrasena) {
+        if (!claveRegistrada || claveRegistrada !== clave) {
             return respuesta.status(401).json({
                 exito: false,
                 mensaje: 'Credenciales incorrectas, verifique sus datos.'
@@ -662,9 +666,9 @@ app.post('/api/autenticacion', async (solicitud, respuesta) => {
         respuesta.json({
             exito: true,
             usuario: {
-                id: usuario.id_usuario ?? usuario.id,
+                id: usuario.id ?? usuario.id_usuario,
                 correo: usuario.correo,
-                nombre_completo: usuario.nombre_completo ?? usuario.usuario ?? usuario.correo
+                nombre_completo: usuario.nombre ?? usuario.nombre_completo ?? usuario.usuario ?? usuario.correo
             }
         });
     } catch (error) {

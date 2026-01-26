@@ -1214,40 +1214,24 @@
             }
         }
 
-        // Envía las credenciales consultando la tabla usuarios en Supabase.
+        // Envía las credenciales consultando la base en Supabase.
         async function autenticarUsuario(correo, contrasena) {
-            const parametros = new URLSearchParams();
-            parametros.set('select', '*');
-            parametros.set('correo', `eq.${correo}`);
-            parametros.set('limit', '1');
-            const url = construirRutaSupabase('usuarios', parametros);
-
-            const { respuesta, datos } = await solicitarApi(
-                url,
-                {
-                    headers: obtenerEncabezadosSupabase()
+            const respuesta = await fetch('/api/autenticacion', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
                 },
-                'No se pudo contactar la API de Supabase para validar el ingreso.'
-            );
+                body: JSON.stringify({ correo, contrasena })
+            });
+            const datos = await respuesta.json().catch(() => ({}));
 
-            if (!respuesta.ok || !Array.isArray(datos) || datos.length === 0) {
-                throw new Error('Las credenciales no son válidas.');
-            }
-
-            const usuario = datos[0];
-            const claveRegistrada = usuario.contrasena || usuario.password_hash || '';
-
-            if (claveRegistrada !== contrasena) {
-                throw new Error('Las credenciales no son válidas.');
+            if (!respuesta.ok) {
+                throw new Error(datos.mensaje || 'Las credenciales no son válidas.');
             }
 
             return {
                 exito: true,
-                usuario: {
-                    id: usuario.id || usuario.id_usuario,
-                    correo: usuario.correo,
-                    nombre_completo: usuario.nombre || usuario.nombre_completo || usuario.usuario || usuario.correo
-                }
+                usuario: datos.usuario
             };
         }
 
