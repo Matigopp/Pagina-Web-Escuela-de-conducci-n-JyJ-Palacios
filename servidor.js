@@ -1,9 +1,20 @@
 const path = require('path');
 const express = require('express');
+const multer = require('multer');
 const { obtenerPool, probarConexion, hayConfiguracionBaseDatos } = require('./configuracion/conexionBaseDatos');
 const supabase = require("./configuracion/supabaseClient");
 
 const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Aplica el middleware de carga solo cuando el request es multipart/form-data.
+function procesarArchivoSiEsMultipart(req, res, next) {
+    const tipoContenido = req.headers['content-type'] || '';
+    if (tipoContenido.startsWith('multipart/form-data')) {
+        return upload.single('archivo')(req, res, next);
+    }
+    return next();
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -116,7 +127,7 @@ function nombreContieneNumeros(nombre) {
     return /[0-9]/.test(nombre);
 }
 
-// Aumenta el límite del cuerpo para permitir documentos en base64 o JSON extensos.
+// Aumenta el límite del cuerpo para permitir formularios y solicitudes JSON extensas.
 app.use(express.json({ limit: process.env.LIMITE_CUERPO_JSON || '20mb' }));
 app.use(express.urlencoded({ limit: process.env.LIMITE_CUERPO_URL || '20mb', extended: true }));
 
@@ -195,22 +206,40 @@ app.get("/api/documentos", async (req, res) => {
 });
 
 // CREAR DOCUMENTO
-app.post("/api/documentos", async (req, res) => {
+app.post("/api/documentos", upload.single("archivo"), async (req, res) => {
     try {
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
-        const { titulo_documento, descripcion_documento, documento, tipo_documento } = req.body || {};
-        if (!titulo_documento || !documento || !tipo_documento) {
+        const { titulo_documento, descripcion_documento, tipo_documento } = req.body || {};
+        const archivo = req.file;
+        if (!titulo_documento || !tipo_documento || !archivo) {
             return res.status(400).json({ exito: false, mensaje: "Faltan campos obligatorios." });
         }
+
+        // Genera un nombre único para el archivo en Storage.
+        const nombreSeguro = archivo.originalname.replace(/[^\w.\-]+/g, "_");
+        const ruta = `${Date.now()}_${nombreSeguro}`;
+
+        // Sube el archivo a Supabase Storage.
+        const { error: errorSubida } = await supabase.storage
+            .from("documentos")
+            .upload(ruta, archivo.buffer, { contentType: archivo.mimetype, upsert: false });
+
+        if (errorSubida) {
+            return res.status(500).json({ exito: false, mensaje: errorSubida.message });
+        }
+
+        // Obtiene la URL pública cuando el bucket es público.
+        const { data: datosPublicos } = supabase.storage.from("documentos").getPublicUrl(ruta);
+        const urlDocumento = datosPublicos?.publicUrl || ruta;
 
         const { data, error } = await supabase
             .from("documentos")
             .insert([{
                 titulo_documento,
                 descripcion_documento: descripcion_documento || "",
-                documento,
+                documento: urlDocumento,
                 tipo_documento
             }])
             .select("id_documento, titulo_documento, descripcion_documento, documento, tipo_documento")
@@ -226,7 +255,7 @@ app.post("/api/documentos", async (req, res) => {
 });
 
 // EDITAR DOCUMENTO
-app.put("/api/documentos/:id", async (req, res) => {
+app.put("/api/documentos/:id", procesarArchivoSiEsMultipart, async (req, res) => {
     try {
         if (!validarCorreoAdministrador(req, res)) {
             return;
@@ -244,7 +273,24 @@ app.put("/api/documentos/:id", async (req, res) => {
         if (descripcion_documento != null) {
             payload.descripcion_documento = descripcion_documento;
         }
-        if (documento != null && String(documento).trim() !== "") {
+        const archivo = req.file;
+        if (archivo) {
+            // Genera un nombre único para el nuevo archivo en Storage.
+            const nombreSeguro = archivo.originalname.replace(/[^\w.\-]+/g, "_");
+            const ruta = `${Date.now()}_${nombreSeguro}`;
+
+            // Sube el archivo a Supabase Storage.
+            const { error: errorSubida } = await supabase.storage
+                .from("documentos")
+                .upload(ruta, archivo.buffer, { contentType: archivo.mimetype, upsert: false });
+
+            if (errorSubida) {
+                return res.status(500).json({ exito: false, mensaje: errorSubida.message });
+            }
+
+            const { data: datosPublicos } = supabase.storage.from("documentos").getPublicUrl(ruta);
+            payload.documento = datosPublicos?.publicUrl || ruta;
+        } else if (documento != null && String(documento).trim() !== "") {
             payload.documento = documento;
         }
         if (tipo_documento != null) {
