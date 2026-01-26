@@ -197,6 +197,9 @@ app.get("/api/documentos", async (req, res) => {
 // CREAR DOCUMENTO
 app.post("/api/documentos", async (req, res) => {
     try {
+        if (!validarCorreoAdministrador(req, res)) {
+            return;
+        }
         const { titulo_documento, descripcion_documento, documento, tipo_documento } = req.body || {};
         if (!titulo_documento || !documento || !tipo_documento) {
             return res.status(400).json({ exito: false, mensaje: "Faltan campos obligatorios." });
@@ -225,6 +228,9 @@ app.post("/api/documentos", async (req, res) => {
 // EDITAR DOCUMENTO
 app.put("/api/documentos/:id", async (req, res) => {
     try {
+        if (!validarCorreoAdministrador(req, res)) {
+            return;
+        }
         const id = Number(req.params.id);
         if (!id) {
             return res.status(400).json({ exito: false, mensaje: "ID inválido." });
@@ -264,6 +270,9 @@ app.put("/api/documentos/:id", async (req, res) => {
 // ELIMINAR DOCUMENTO
 app.delete("/api/documentos/:id", async (req, res) => {
     try {
+        if (!validarCorreoAdministrador(req, res)) {
+            return;
+        }
         const id = Number(req.params.id);
         if (!id) {
             return res.status(400).json({ exito: false, mensaje: "ID inválido." });
@@ -284,8 +293,11 @@ app.delete("/api/documentos/:id", async (req, res) => {
 });
 
 // LISTAR USUARIOS
-app.get("/api/usuarios", async (_req, res) => {
+app.get("/api/usuarios", async (req, res) => {
     try {
+        if (!validarCorreoAdministrador(req, res)) {
+            return;
+        }
         const { data, error } = await supabase
             .from("usuarios")
             .select("id_usuario, nombre, correo")
@@ -300,9 +312,35 @@ app.get("/api/usuarios", async (_req, res) => {
     }
 });
 
+// Lee el correo enviado por el frontend para validar acciones restringidas.
+function obtenerCorreoSesionDesdeHeaders(req) {
+    const correoHeader = req.get("x-correo-sesion");
+    if (!correoHeader) {
+        return "";
+    }
+    return String(correoHeader).trim().toLowerCase();
+}
+
+// Valida que el correo enviado corresponda al administrador autorizado.
+function validarCorreoAdministrador(req, res) {
+    const correoAdmin = "admin@gmail.com";
+    const correoSesion = obtenerCorreoSesionDesdeHeaders(req);
+    if (correoSesion !== correoAdmin) {
+        res.status(403).json({
+            exito: false,
+            mensaje: "No autorizado para realizar esta acción."
+        });
+        return false;
+    }
+    return true;
+}
+
 // CREAR USUARIO
 app.post("/api/usuarios", async (req, res) => {
     try {
+        if (!validarCorreoAdministrador(req, res)) {
+            return;
+        }
         const { nombre, correo, contrasena } = req.body || {};
         if (!nombre || !correo || !contrasena) {
             return res.status(400).json({ exito: false, mensaje: "Faltan campos obligatorios." });
@@ -326,6 +364,9 @@ app.post("/api/usuarios", async (req, res) => {
 // EDITAR USUARIO
 app.put("/api/usuarios/:id", async (req, res) => {
     try {
+        if (!validarCorreoAdministrador(req, res)) {
+            return;
+        }
         const id = Number(req.params.id);
         const { nombre, correo, contrasena } = req.body || {};
         if (!id) {
@@ -362,6 +403,9 @@ app.put("/api/usuarios/:id", async (req, res) => {
 // ELIMINAR USUARIO
 app.delete("/api/usuarios/:id", async (req, res) => {
     try {
+        if (!validarCorreoAdministrador(req, res)) {
+            return;
+        }
         const id = Number(req.params.id);
         if (!id) {
             return res.status(400).json({ exito: false, mensaje: "ID inválido." });

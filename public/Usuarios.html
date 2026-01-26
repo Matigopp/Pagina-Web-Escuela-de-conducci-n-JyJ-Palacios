@@ -365,6 +365,13 @@
             return '';
         }
 
+        // Prepara el header que el backend usa para autorizar acciones de administración.
+        function construirEncabezadosAdmin() {
+            return {
+                'x-correo-sesion': obtenerCorreoSesion()
+            };
+        }
+
         // Redirige al inicio si el usuario no es administrador.
         function verificarAccesoAdministrador() {
             const correoSesion = obtenerCorreoSesion();
@@ -479,7 +486,9 @@
             try {
                 const datos = await solicitarApi(
                     '/api/usuarios',
-                    {},
+                    {
+                        headers: construirEncabezadosAdmin()
+                    },
                     'No se pudo contactar la API de usuarios para obtener los usuarios.'
                 );
                 const usuarios = Array.isArray(datos.usuarios) ? datos.usuarios : [];
@@ -503,7 +512,8 @@
                 {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        ...construirEncabezadosAdmin()
                     },
                     body: JSON.stringify(payload)
                 },
@@ -526,7 +536,8 @@
                 {
                     method: 'PUT',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        ...construirEncabezadosAdmin()
                     },
                     body: JSON.stringify(payload)
                 },
@@ -548,7 +559,8 @@
                 await solicitarApi(
                     `/api/usuarios/${id}`,
                     {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: construirEncabezadosAdmin()
                     },
                     'No se pudo contactar la API de usuarios para eliminar el usuario.'
                 );

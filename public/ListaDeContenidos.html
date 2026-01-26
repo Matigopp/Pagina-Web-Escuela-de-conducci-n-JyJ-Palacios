@@ -986,6 +986,21 @@
             enlaceGestionUsuarios.classList.toggle('visible', correoSesion === correoAdmin);
         }
 
+        // Obtiene el correo actual de la sesión para enviarlo en los headers del backend.
+        function obtenerCorreoSesion() {
+            if (datosUsuario && typeof datosUsuario.correo === 'string') {
+                return datosUsuario.correo.trim().toLowerCase();
+            }
+            return '';
+        }
+
+        // Prepara los headers mínimos que requiere el backend para autorizar escrituras.
+        function construirEncabezadosAdmin() {
+            return {
+                'x-correo-sesion': obtenerCorreoSesion()
+            };
+        }
+
         function obtenerNombreDescarga(documento, urlFinal) {
             if (urlFinal && !urlFinal.startsWith('data:') && !urlFinal.startsWith('blob:')) {
                 const partesUrl = urlFinal.split('/');
@@ -1253,7 +1268,8 @@
                 {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        ...construirEncabezadosAdmin()
                     },
                     body: JSON.stringify(payload)
                 },
@@ -1285,7 +1301,8 @@
                 {
                     method: 'PUT',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        ...construirEncabezadosAdmin()
                     },
                     body: JSON.stringify(payload)
                 },
@@ -1308,7 +1325,8 @@
             await solicitarApi(
                 `/api/documentos/${id}`,
                 {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: construirEncabezadosAdmin()
                 },
                 'No se pudo contactar la API de documentos para eliminar el documento.'
             );
