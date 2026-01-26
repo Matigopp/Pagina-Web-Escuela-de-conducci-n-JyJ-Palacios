@@ -857,6 +857,8 @@
         let datosUsuario = null;
         let tipoListaSolicitada = 'unidades';
         let urlDocumentoSeleccionado = '';
+        let archivoDocumentoSeleccionado = null;
+        let urlVistaDocumentoTemporal = '';
         let urlsBlobDocumentos = [];
 
         // Bloquea el desplazamiento del fondo mientras haya un modal o panel abierto.
@@ -1058,6 +1060,10 @@
                 return 'Documento cargado previamente';
             }
 
+            if (url.startsWith('blob:')) {
+                return 'Documento seleccionado';
+            }
+
             try {
                 const urlParseada = new URL(url);
                 const partesRuta = urlParseada.pathname.split('/');
@@ -1070,7 +1076,12 @@
 
         function limpiarArchivoDocumento() {
             urlDocumentoSeleccionado = '';
+            archivoDocumentoSeleccionado = null;
             campoArchivoDocumento.value = '';
+            if (urlVistaDocumentoTemporal) {
+                URL.revokeObjectURL(urlVistaDocumentoTemporal);
+                urlVistaDocumentoTemporal = '';
+            }
             actualizarTextoZonaDocumento('Arrastra un documento o haz clic aquí.');
         }
 
@@ -1080,18 +1091,15 @@
                 return;
             }
 
-            // Leemos el archivo para convertirlo en una URL base64 y guardarlo en la base de datos.
-            const lector = new FileReader();
-            lector.onload = function () {
-                urlDocumentoSeleccionado = lector.result || '';
-                actualizarTextoZonaDocumento(`Archivo seleccionado: ${archivo.name}`);
-                actualizarMensajeDocumento('');
-            };
-            lector.onerror = function () {
-                actualizarMensajeDocumento('No se pudo leer el archivo seleccionado.');
-                limpiarArchivoDocumento();
-            };
-            lector.readAsDataURL(archivo);
+            // Conserva el archivo para enviarlo con FormData y genera una vista previa local.
+            archivoDocumentoSeleccionado = archivo;
+            if (urlVistaDocumentoTemporal) {
+                URL.revokeObjectURL(urlVistaDocumentoTemporal);
+            }
+            urlVistaDocumentoTemporal = URL.createObjectURL(archivo);
+            urlDocumentoSeleccionado = urlVistaDocumentoTemporal;
+            actualizarTextoZonaDocumento(`Archivo seleccionado: ${archivo.name}`);
+            actualizarMensajeDocumento('');
         }
 
 
@@ -1130,6 +1138,7 @@
             campoTituloDocumento.value = documento.titulo || '';
             campoDescripcionDocumento.value = documento.descripcion || '';
             urlDocumentoSeleccionado = documento.url || '';
+            archivoDocumentoSeleccionado = null;
             campoArchivoDocumento.value = '';
             const nombreDocumento = obtenerNombreDocumentoDesdeUrl(urlDocumentoSeleccionado);
             if (nombreDocumento) {
@@ -1247,31 +1256,29 @@
 
             const documentos = Array.isArray(datos.documentos) ? datos.documentos : [];
             return documentos.map((documento) => ({
-                id: documento.id,
-                titulo: documento.titulo,
-                descripcion: documento.descripcion,
-                url: documento.url,
-                tipo: documento.tipo
+                id: documento.id_documento ?? documento.id,
+                titulo: documento.titulo_documento ?? documento.titulo,
+                descripcion: documento.descripcion_documento ?? documento.descripcion,
+                url: documento.documento ?? documento.url,
+                tipo: documento.tipo_documento ?? documento.tipo
             }));
         }
 
         async function crearDocumento(documento) {
-            const payload = {
-                titulo: documento.titulo,
-                descripcion: documento.descripcion || null,
-                url: documento.url,
-                tipo: documento.tipo
-            };
+            const formulario = new FormData();
+            formulario.append('titulo_documento', documento.titulo);
+            formulario.append('descripcion_documento', documento.descripcion || '');
+            formulario.append('tipo_documento', documento.tipo);
+            formulario.append('archivo', documento.archivo);
 
             const datos = await solicitarApi(
                 '/api/documentos',
                 {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         ...construirEncabezadosAdmin()
                     },
-                    body: JSON.stringify(payload)
+                    body: formulario
                 },
                 'No se pudo contactar la API de documentos para crear el documento.'
             );
@@ -1280,32 +1287,44 @@
                 || (Array.isArray(datos.documentos) ? datos.documentos[0] : null)
                 || {};
             return {
-                id: documentoCreado.id,
-                titulo: documentoCreado.titulo,
-                descripcion: documentoCreado.descripcion,
-                url: documentoCreado.url,
-                tipo: documentoCreado.tipo
+                id: documentoCreado.id_documento ?? documentoCreado.id,
+                titulo: documentoCreado.titulo_documento ?? documentoCreado.titulo,
+                descripcion: documentoCreado.descripcion_documento ?? documentoCreado.descripcion,
+                url: documentoCreado.documento ?? documentoCreado.url,
+                tipo: documentoCreado.tipo_documento ?? documentoCreado.tipo
             };
         }
 
         async function actualizarDocumento(id, documento) {
-            const payload = {
-                titulo: documento.titulo,
-                descripcion: documento.descripcion || null,
-                url: documento.url,
-                tipo: documento.tipo
+            const usarArchivo = Boolean(documento.archivo);
+            const opcionesSolicitud = {
+                method: 'PUT',
+                headers: {
+                    ...construirEncabezadosAdmin()
+                }
             };
+
+            if (usarArchivo) {
+                const formulario = new FormData();
+                formulario.append('titulo_documento', documento.titulo);
+                formulario.append('descripcion_documento', documento.descripcion || '');
+                formulario.append('tipo_documento', documento.tipo);
+                formulario.append('archivo', documento.archivo);
+                opcionesSolicitud.body = formulario;
+            } else {
+                const payload = {
+                    titulo_documento: documento.titulo,
+                    descripcion_documento: documento.descripcion || null,
+                    documento: documento.url,
+                    tipo_documento: documento.tipo
+                };
+                opcionesSolicitud.headers['Content-Type'] = 'application/json';
+                opcionesSolicitud.body = JSON.stringify(payload);
+            }
 
             const datos = await solicitarApi(
                 `/api/documentos/${id}`,
-                {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...construirEncabezadosAdmin()
-                    },
-                    body: JSON.stringify(payload)
-                },
+                opcionesSolicitud,
                 'No se pudo contactar la API de documentos para actualizar el documento.'
             );
 
@@ -1313,11 +1332,11 @@
                 || (Array.isArray(datos.documentos) ? datos.documentos[0] : null)
                 || {};
             return {
-                id: documentoActualizado.id,
-                titulo: documentoActualizado.titulo,
-                descripcion: documentoActualizado.descripcion,
-                url: documentoActualizado.url,
-                tipo: documentoActualizado.tipo
+                id: documentoActualizado.id_documento ?? documentoActualizado.id,
+                titulo: documentoActualizado.titulo_documento ?? documentoActualizado.titulo,
+                descripcion: documentoActualizado.descripcion_documento ?? documentoActualizado.descripcion,
+                url: documentoActualizado.documento ?? documentoActualizado.url,
+                tipo: documentoActualizado.tipo_documento ?? documentoActualizado.tipo
             };
         }
 
@@ -1426,13 +1445,29 @@
             const url = (urlDocumentoSeleccionado || '').trim();
             const tipo = campoTipoDocumento.value;
 
-            if (!titulo || !url || !tipo) {
-                actualizarMensajeDocumento('Debe completar el título, el documento y el tipo.');
+            if (!titulo || !tipo) {
+                actualizarMensajeDocumento('Debe completar el título y el tipo.');
+                return;
+            }
+
+            if (!id && !archivoDocumentoSeleccionado) {
+                actualizarMensajeDocumento('Debe seleccionar un archivo para crear el documento.');
+                return;
+            }
+
+            if (id && !archivoDocumentoSeleccionado && !url) {
+                actualizarMensajeDocumento('Debe mantener el documento actual o seleccionar uno nuevo.');
                 return;
             }
 
             try {
-                const payload = { titulo, descripcion, url, tipo };
+                const payload = {
+                    titulo,
+                    descripcion,
+                    url,
+                    tipo,
+                    archivo: archivoDocumentoSeleccionado
+                };
                 if (id) {
                     await actualizarDocumento(id, payload);
                 } else {
