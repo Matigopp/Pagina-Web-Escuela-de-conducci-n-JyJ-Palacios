@@ -12,7 +12,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // Home
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+    res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 const puerto = Number(process.env.PUERTO_APP) || 3000;
@@ -558,7 +558,7 @@ app.delete('/api/usuarios/:id', async (solicitud, respuesta) => {
                 });
             }
 
-        // Mantiene la numeración continua al compactar IDs posteriores al eliminado.
+            // Mantiene la numeración continua al compactar IDs posteriores al eliminado.
             await cliente.query(`
                 UPDATE usuarios
                 SET ${columnaId} = ${columnaId} - 1
@@ -636,6 +636,7 @@ app.post('/api/autenticacion', async (req, res) => {
             .select('id_usuario, nombre, correo, contrasena')
             .eq('correo', correo)
             .maybeSingle();
+
 
         if (error) {
             console.error('Supabase error /api/autenticacion:', error);
