@@ -151,7 +151,7 @@ if (debePrepararBaseDatos) {
             console.error('No se pudo preparar la secuencia de usuarios:', error);
         });
     }
-} else {
+} else if (!estaEnVercel()) {
     console.warn('Se omitió la preparación de la base de datos porque no hay configuración disponible.');
 }
 
@@ -619,64 +619,85 @@ app.get('/api/estado-bd', async (_solicitud, respuesta) => {
  */
 
 app.post('/api/autenticacion', async (req, res) => {
-  const { correo, contrasena, password } = req.body || {};
-  const clave = contrasena || password;
+    const { correo, contrasena, password } = req.body || {};
+    const clave = contrasena || password;
 
-  if (!correo || !clave) {
-    return res.status(400).json({
-      exito: false,
-      mensaje: 'Debe proporcionar el correo y la contraseña.'
-    });
-  }
-
-  try {
-    // Trae SOLO columnas que existen en tu tabla
-    const { data: usuario, error } = await supabase
-      .from('usuarios')
-      .select('id_usuario, nombre, correo, contrasena')
-      .eq('correo', correo)
-      .maybeSingle(); // devuelve objeto o null (más limpio que array)
-
-    if (error) {
-      return res.status(500).json({
-        exito: false,
-        mensaje: 'No se pudo validar el acceso en Supabase.',
-        detalle: error.message
-      });
+    if (!correo || !clave) {
+        return res.status(400).json({
+            exito: false,
+            mensaje: 'Debe proporcionar el correo y la contraseña.'
+        });
     }
 
-    if (!usuario) {
-      return res.status(401).json({
-        exito: false,
-        mensaje: 'Credenciales incorrectas, verifique sus datos.'
-      });
-    }
+    try {
+        // Trae solo las columnas reales de la tabla usuarios.
+        const { data: usuario, error } = await supabase
+            .from('usuarios')
+            .select('id_usuario, nombre, correo, contrasena')
+            .eq('correo', correo)
+            .maybeSingle();
 
-    // Comparación simple (asume contraseña en texto plano).
-    // Si luego usas hash (bcrypt), aquí se cambia.
-    if (usuario.contrasena !== clave) {
-      return res.status(401).json({
-        exito: false,
-        mensaje: 'Credenciales incorrectas, verifique sus datos.'
-      });
-    }
+        if (error) {
+            console.error('Supabase error /api/autenticacion:', error);
+            return res.status(500).json({
+                exito: false,
+                mensaje: 'No se pudo validar el acceso en Supabase.',
+                detalle: error.message
+            });
+        }
 
-    return res.json({
-      exito: true,
-      usuario: {
-        id: usuario.id_usuario,
-        correo: usuario.correo,
-        nombre_completo: usuario.nombre || usuario.correo
-      }
-    });
-  } catch (e) {
-    console.error('Error al autenticar usuario:', e);
-    return res.status(500).json({
-      exito: false,
-      mensaje: 'Ocurrió un problema al validar las credenciales.',
-      detalle: String(e.message || e)
-    });
-  }
+        if (!usuario) {
+            return res.status(401).json({
+                exito: false,
+                mensaje: 'Credenciales incorrectas, verifique sus datos.'
+            });
+        }
+
+        // Comparación simple en texto plano. Si luego se usa hash, se cambia aquí.
+        if ((usuario.contrasena || '').trim() !== String(clave).trim()) {
+            return res.status(401).json({
+                exito: false,
+                mensaje: 'Credenciales incorrectas, verifique sus datos.'
+            });
+        }
+
+        return res.json({
+            exito: true,
+            usuario: {
+                id: usuario.id_usuario,
+                correo: usuario.correo,
+                nombre_completo: usuario.nombre || usuario.correo
+            }
+        });
+    } catch (e) {
+        console.error('Error interno /api/autenticacion:', e);
+        return res.status(500).json({
+            exito: false,
+            mensaje: 'Ocurrió un problema al validar las credenciales.',
+            detalle: String(e.message || e)
+        });
+    }
+});
+
+/**
+ * Diagnóstico rápido de conexión con Supabase.
+ * Útil para distinguir problemas de credenciales, RLS o tabla inexistente.
+ */
+app.get('/api/diag/supabase', async (_req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('usuarios')
+            .select('correo')
+            .limit(1);
+
+        if (error) {
+            return res.status(500).json({ ok: false, error: error.message });
+        }
+
+        return res.json({ ok: true, sample: data });
+    } catch (e) {
+        return res.status(500).json({ ok: false, error: String(e) });
+    }
 });
 
 
