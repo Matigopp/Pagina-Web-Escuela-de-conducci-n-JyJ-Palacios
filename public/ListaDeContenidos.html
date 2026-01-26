@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -34,7 +35,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         /* Logo clickeable que reutiliza la imagen local para evitar dependencias externas */
@@ -58,7 +59,7 @@
             line-height: 1.2;
             user-select: none;
         }
-        
+
         .logo-img {
             width: 52px;
             height: auto;
@@ -133,7 +134,7 @@
 
         .hero {
             position: relative;
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images/listacontenidostitular.jpeg') center/cover no-repeat;
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('images/listacontenidostitular.jpeg') center/cover no-repeat;
             color: white;
             text-align: center;
             padding: 110px 20px 120px;
@@ -176,14 +177,14 @@
             background-color: white;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
             border: 1px solid #e9e9e9;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .content-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 14px 22px rgba(0,0,0,0.15);
+            box-shadow: 0 14px 22px rgba(0, 0, 0, 0.15);
         }
 
         .card-image {
@@ -222,7 +223,7 @@
             text-decoration: none;
             border-radius: 6px;
             font-weight: 600;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
         }
 
         .btn-primary:hover {
@@ -265,7 +266,7 @@
         .modal-acceso {
             background: #ffffff;
             border-radius: 14px;
-            box-shadow: 0 18px 35px rgba(0,0,0,0.18);
+            box-shadow: 0 18px 35px rgba(0, 0, 0, 0.18);
             max-width: 420px;
             width: 100%;
             padding: 26px 28px;
@@ -275,7 +276,7 @@
         .modal-documento {
             background: #ffffff;
             border-radius: 14px;
-            box-shadow: 0 18px 35px rgba(0,0,0,0.18);
+            box-shadow: 0 18px 35px rgba(0, 0, 0, 0.18);
             max-width: 520px;
             width: 100%;
             padding: 26px 28px;
@@ -640,16 +641,16 @@
         .estado-documentos.error {
             color: #c0392b;
         }
-
     </style>
 </head>
+
 <body>
     <header>
         <div class="logo-container">
             <!-- Solo el logo lleva al inicio para evitar que el título redirija -->
             <a class="logo-link" href="index.html" aria-label="Volver al inicio">
                 <img class="logo-img" src="images/LOGO.jpg" alt="Logo de la Escuela de Conductores J&J Palacios SPA">
-                </a>
+            </a>
             <span class="logo-texto">ESCUELA DE CONDUCTORES J&J PALACIOS SPA</span>
         </div>
         <nav>
@@ -674,7 +675,8 @@
                 <div class="card-body">
                     <h3>Unidades</h3>
                     <p>Lecciones paso a paso con ejemplos de conducción urbana y reglamentación vigente.</p>
-                    <a class="btn-primary" href="CursosDisponibles.html" data-modal-acceso="true" data-lista="unidades">Acceder a Unidades</a>
+                    <a class="btn-primary" href="CursosDisponibles.html" data-modal-acceso="true"
+                        data-lista="unidades">Acceder a Unidades</a>
                 </div>
             </div>
             <div class="content-card">
@@ -682,16 +684,19 @@
                 <div class="card-body">
                     <h3>Material de Apoyo</h3>
                     <p>Guías descargables, cuestionarios y documentos explicativos para reforzar el aprendizaje.</p>
-                    <a class="btn-primary" href="CursosDisponibles.html" data-modal-acceso="true" data-lista="material">Acceder al Material</a>
+                    <a class="btn-primary" href="CursosDisponibles.html" data-modal-acceso="true"
+                        data-lista="material">Acceder al Material</a>
                 </div>
             </div>
             <div class="content-card">
-                 <div class="card-image card-image-libro" style="background-image: url('images/libro-para-conductores.jpg');"></div>
+                <div class="card-image card-image-libro"
+                    style="background-image: url('images/libro-para-conductores.jpg');"></div>
                 <div class="card-body">
                     <h3>Libro nuevo conductor</h3>
                     <p>Evaluaciones cortas para medir tu avance antes de las sesiones prácticas y el examen oficial.</p>
                     <!-- El PDF se alojará en el servidor usando una ruta relativa para evitar rutas locales con credenciales -->
-                    <a class="btn-primary" href="Docs/Libro_para_la_conduccion_en_Chile_Clase_B.pdf" download>Descargar</a>
+                    <a class="btn-primary" href="Docs/Libro_para_la_conduccion_en_Chile_Clase_B.pdf"
+                        download>Descargar</a>
                 </div>
             </div>
         </div>
@@ -718,14 +723,17 @@
                 <div class="grupo-campo">
                     <label for="campo-correo">Correo</label>
                     <div class="campo-input">
-                        <input id="campo-correo" name="correo" type="email" placeholder="Ej. persona@dominio.cl" autocomplete="email" inputmode="email">
+                        <input id="campo-correo" name="correo" type="email" placeholder="Ej. persona@dominio.cl"
+                            autocomplete="email" inputmode="email">
                     </div>
                 </div>
                 <div class="grupo-campo">
                     <label for="campo-contrasena">Contraseña</label>
                     <div class="campo-input">
-                        <input id="campo-contrasena" name="contrasena" type="password" placeholder="Igual que el nombre de usuario" autocomplete="current-password">
-                        <button class="btn-ojo" type="button" id="toggle-contrasena" aria-label="Mostrar u ocultar contraseña">Ver</button>
+                        <input id="campo-contrasena" name="contrasena" type="password"
+                            placeholder="Igual que el nombre de usuario" autocomplete="current-password">
+                        <button class="btn-ojo" type="button" id="toggle-contrasena"
+                            aria-label="Mostrar u ocultar contraseña">Ver</button>
                     </div>
                 </div>
                 <button class="btn-ingresar" type="submit">Ingresar</button>
@@ -751,7 +759,8 @@
 
     <div class="capa-modal" id="capa-modal-documento" aria-hidden="true">
         <div class="modal-documento" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-documento">
-            <button class="cerrar-modal" id="cerrar-modal-documento" aria-label="Cerrar formulario de documento">×</button>
+            <button class="cerrar-modal" id="cerrar-modal-documento"
+                aria-label="Cerrar formulario de documento">×</button>
             <div class="modal-encabezado">
                 <div>
                     <h3 id="titulo-modal-documento">Agregar documento</h3>
@@ -763,7 +772,8 @@
                 <div class="grupo-campo">
                     <label for="documento-titulo">Título</label>
                     <div class="campo-input">
-                        <input id="documento-titulo" name="titulo" type="text" placeholder="Ej. Señales informativas" required>
+                        <input id="documento-titulo" name="titulo" type="text" placeholder="Ej. Señales informativas"
+                            required>
                     </div>
                 </div>
                 <div class="grupo-campo">
@@ -777,7 +787,8 @@
                 <div class="grupo-campo">
                     <label for="documento-descripcion">Descripción</label>
                     <div class="campo-input">
-                        <textarea id="documento-descripcion" name="descripcion" placeholder="Detalle breve del contenido"></textarea>
+                        <textarea id="documento-descripcion" name="descripcion"
+                            placeholder="Detalle breve del contenido"></textarea>
                     </div>
                 </div>
                 <div class="grupo-campo">
@@ -918,10 +929,10 @@
             try {
                 const respuesta = fetch(urlDocumento);
                 return respuesta
-                    .then(function(resultado) {
+                    .then(function (resultado) {
                         return resultado.blob();
                     })
-                    .then(function(blob) {
+                    .then(function (blob) {
                         const urlBlob = URL.createObjectURL(blob);
                         urlsBlobDocumentos.push(urlBlob);
                         return urlBlob;
@@ -932,7 +943,7 @@
         }
 
         function limpiarUrlsBlobDocumentos() {
-            urlsBlobDocumentos.forEach(function(url) {
+            urlsBlobDocumentos.forEach(function (url) {
                 URL.revokeObjectURL(url);
             });
             urlsBlobDocumentos = [];
@@ -1087,12 +1098,12 @@
 
             // Leemos el archivo para convertirlo en una URL base64 y guardarlo en la base de datos.
             const lector = new FileReader();
-            lector.onload = function() {
+            lector.onload = function () {
                 urlDocumentoSeleccionado = lector.result || '';
                 actualizarTextoZonaDocumento(`Archivo seleccionado: ${archivo.name}`);
                 actualizarMensajeDocumento('');
             };
-            lector.onerror = function() {
+            lector.onerror = function () {
                 actualizarMensajeDocumento('No se pudo leer el archivo seleccionado.');
                 limpiarArchivoDocumento();
             };
@@ -1216,24 +1227,31 @@
 
         // Envía las credenciales consultando la base en Supabase.
         async function autenticarUsuario(correo, contrasena) {
-            const respuesta = await fetch('/api/autenticacion', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+            const respuesta = await fetch("/api/autenticacion", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ correo, contrasena })
             });
+
             const datos = await respuesta.json().catch(() => ({}));
 
+            // Si el backend respondió 4xx/5xx
             if (!respuesta.ok) {
-                throw new Error(datos.mensaje || 'Las credenciales no son válidas.');
+                throw new Error(datos.mensaje || datos.error || "Las credenciales no son válidas.");
             }
 
-            return {
-                exito: true,
-                usuario: datos.usuario
-            };
+            // Si el backend respondió 200 pero igual indicó exito=false
+            if (datos.exito === false) {
+                throw new Error(datos.mensaje || "Las credenciales no son válidas.");
+            }
+
+            if (!datos.usuario) {
+                throw new Error("Respuesta inválida del servidor: falta 'usuario'.");
+            }
+
+            return datos; // { exito, usuario, ... }
         }
+
 
         async function obtenerDocumentosPorTipo(tipo) {
             const parametros = new URLSearchParams();
@@ -1361,7 +1379,7 @@
         function renderizarDocumentos(documentos) {
             listaDocumentos.innerHTML = '';
             limpiarUrlsBlobDocumentos();
-            documentos.forEach(function(documento) {
+            documentos.forEach(function (documento) {
                 const elemento = document.createElement('li');
                 elemento.className = 'item-documento';
                 elemento.dataset.id = documento.id;
@@ -1391,7 +1409,7 @@
                 elemento.innerHTML = contenidoDocumento;
                 listaDocumentos.appendChild(elemento);
 
-                Promise.resolve(obtenerUrlParaVista(urlDocumento)).then(function(urlVistaPrevia) {
+                Promise.resolve(obtenerUrlParaVista(urlDocumento)).then(function (urlVistaPrevia) {
                     const urlFinal = urlVistaPrevia || normalizarUrlDocumento(urlDocumento);
                     const vista = elemento.querySelector('object');
                     const enlaceDescarga = elemento.querySelector('.enlace-descarga');
@@ -1512,7 +1530,7 @@
             }
         }
 
-        enlacesAcceso.forEach(function(enlace) {
+        enlacesAcceso.forEach(function (enlace) {
             enlace.addEventListener('click', mostrarModalAcceso);
         });
 
@@ -1527,7 +1545,7 @@
         cargarSesionUsuario();
         revisarInicioSesionPorParametro();
         btnCerrarModal.addEventListener('click', ocultarModalAcceso);
-        capaModal.addEventListener('click', function(evento) {
+        capaModal.addEventListener('click', function (evento) {
             if (evento.target === capaModal) {
                 ocultarModalAcceso();
             }
@@ -1538,7 +1556,7 @@
         btnAgregarDocumento.addEventListener('click', prepararFormularioNuevo);
         btnCerrarModalDocumento.addEventListener('click', ocultarFormularioDocumento);
         btnCancelarDocumento.addEventListener('click', ocultarFormularioDocumento);
-        capaModalDocumento.addEventListener('click', function(evento) {
+        capaModalDocumento.addEventListener('click', function (evento) {
             if (evento.target === capaModalDocumento) {
                 ocultarFormularioDocumento();
             }
@@ -1546,16 +1564,16 @@
         formularioDocumento.addEventListener('submit', manejarEnvioDocumento);
         listaDocumentos.addEventListener('click', manejarAccionDocumento);
         btnCerrarSesion.addEventListener('click', cerrarSesionUsuario);
-        campoArchivoDocumento.addEventListener('change', function(evento) {
+        campoArchivoDocumento.addEventListener('change', function (evento) {
             const archivo = evento.target.files[0];
             procesarArchivoDocumento(archivo);
         });
 
-        zonaCargaDocumento.addEventListener('click', function() {
+        zonaCargaDocumento.addEventListener('click', function () {
             campoArchivoDocumento.click();
         });
 
-        zonaCargaDocumento.addEventListener('keydown', function(evento) {
+        zonaCargaDocumento.addEventListener('keydown', function (evento) {
             if (evento.key === 'Enter' || evento.key === ' ') {
                 evento.preventDefault();
                 campoArchivoDocumento.click();
@@ -1563,16 +1581,16 @@
         });
 
         // Controla el arrastre de archivos sobre la bandeja.
-        zonaCargaDocumento.addEventListener('dragover', function(evento) {
+        zonaCargaDocumento.addEventListener('dragover', function (evento) {
             evento.preventDefault();
             zonaCargaDocumento.classList.add('arrastrando');
         });
 
-        zonaCargaDocumento.addEventListener('dragleave', function() {
+        zonaCargaDocumento.addEventListener('dragleave', function () {
             zonaCargaDocumento.classList.remove('arrastrando');
         });
 
-        zonaCargaDocumento.addEventListener('drop', function(evento) {
+        zonaCargaDocumento.addEventListener('drop', function (evento) {
             evento.preventDefault();
             zonaCargaDocumento.classList.remove('arrastrando');
             const archivo = evento.dataTransfer.files[0];
@@ -1580,4 +1598,5 @@
         });
     </script>
 </body>
+
 </html>
