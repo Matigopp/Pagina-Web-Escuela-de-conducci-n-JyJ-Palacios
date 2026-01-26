@@ -3,14 +3,16 @@ const express = require('express');
 const { obtenerPool, probarConexion, hayConfiguracionBaseDatos } = require('./configuracion/conexionBaseDatos');
 const supabase = require("./configuracion/supabaseClient");
 
-
 const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 // Sirve todos los archivos estáticos desde la raíz del proyecto
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Home
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 const puerto = Number(process.env.PUERTO_APP) || 3000;
@@ -615,72 +617,68 @@ app.get('/api/estado-bd', async (_solicitud, respuesta) => {
  * Valida las credenciales contra la tabla usuarios usando columnas correo y contrasena.
  * Devuelve los datos básicos del usuario autenticado para mostrar en el cliente si se requiere.
  */
-app.post('/api/autenticacion', async (solicitud, respuesta) => {
-    const { correo, contrasena, password } = solicitud.body || {};
-    const clave = contrasena || password;
 
-    if (!supabase) {
-        return respuesta.status(503).json({
-            exito: false,
-            mensaje: 'No hay configuración de Supabase disponible en este entorno.'
-        });
+app.post('/api/autenticacion', async (req, res) => {
+  const { correo, contrasena, password } = req.body || {};
+  const clave = contrasena || password;
+
+  if (!correo || !clave) {
+    return res.status(400).json({
+      exito: false,
+      mensaje: 'Debe proporcionar el correo y la contraseña.'
+    });
+  }
+
+  try {
+    // Trae SOLO columnas que existen en tu tabla
+    const { data: usuario, error } = await supabase
+      .from('usuarios')
+      .select('id_usuario, nombre, correo, contrasena')
+      .eq('correo', correo)
+      .maybeSingle(); // devuelve objeto o null (más limpio que array)
+
+    if (error) {
+      return res.status(500).json({
+        exito: false,
+        mensaje: 'No se pudo validar el acceso en Supabase.',
+        detalle: error.message
+      });
     }
 
-    if (!correo || !clave) {
-        return respuesta.status(400).json({
-            exito: false,
-            mensaje: 'Debe proporcionar el correo y la contraseña.'
-        });
+    if (!usuario) {
+      return res.status(401).json({
+        exito: false,
+        mensaje: 'Credenciales incorrectas, verifique sus datos.'
+      });
     }
 
-    try {
-        const { data: usuarios, error } = await supabase
-            .from('usuarios')
-            .select('id,id_usuario,correo,contrasena,password_hash,nombre,nombre_completo,usuario')
-            .eq('correo', correo)
-            .limit(1);
-
-        if (error) {
-            return respuesta.status(500).json({
-                exito: false,
-                mensaje: 'No se pudo validar el acceso en Supabase.',
-                detalle: error.message
-            });
-        }
-        if (!usuarios || usuarios.length === 0) {
-            return respuesta.status(401).json({
-                exito: false,
-                mensaje: 'Credenciales incorrectas, verifique sus datos.'
-            });
-        }
-
-        const usuario = rows[0];
-        const claveRegistrada = usuario[columnaContrasena] ?? usuario.contrasena ?? usuario.password_hash;
-
-        if (!claveRegistrada || claveRegistrada !== clave) {
-            return respuesta.status(401).json({
-                exito: false,
-                mensaje: 'Credenciales incorrectas, verifique sus datos.'
-            });
-        }
-
-        respuesta.json({
-            exito: true,
-            usuario: {
-                id: usuario.id ?? usuario.id_usuario,
-                correo: usuario.correo,
-                nombre_completo: usuario.nombre ?? usuario.nombre_completo ?? usuario.usuario ?? usuario.correo
-            }
-        });
-    } catch (error) {
-        console.error('Error al autenticar usuario:', error);
-        respuesta.status(500).json({
-            exito: false,
-            mensaje: 'Ocurrió un problema al validar las credenciales.',
-            detalle: error.message
-        });
+    // Comparación simple (asume contraseña en texto plano).
+    // Si luego usas hash (bcrypt), aquí se cambia.
+    if (usuario.contrasena !== clave) {
+      return res.status(401).json({
+        exito: false,
+        mensaje: 'Credenciales incorrectas, verifique sus datos.'
+      });
     }
+
+    return res.json({
+      exito: true,
+      usuario: {
+        id: usuario.id_usuario,
+        correo: usuario.correo,
+        nombre_completo: usuario.nombre || usuario.correo
+      }
+    });
+  } catch (e) {
+    console.error('Error al autenticar usuario:', e);
+    return res.status(500).json({
+      exito: false,
+      mensaje: 'Ocurrió un problema al validar las credenciales.',
+      detalle: String(e.message || e)
+    });
+  }
 });
+
 
 if (!estaEnVercel()) {
     app.listen(puerto, () => {
