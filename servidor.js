@@ -26,6 +26,25 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// Expone solo las claves públicas necesarias para inicializar Supabase en el navegador.
+app.get("/api/configuracion-publica", (_req, res) => {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+        return res.status(500).json({
+            exito: false,
+            mensaje: "Faltan SUPABASE_URL o SUPABASE_ANON_KEY en el entorno."
+        });
+    }
+
+    return res.json({
+        exito: true,
+        supabaseUrl,
+        supabaseAnonKey
+    });
+});
+
 const puerto = Number(process.env.PUERTO_APP) || 3000;
 
 // Detecta si el proceso corre dentro del entorno de Vercel.

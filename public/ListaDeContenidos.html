@@ -808,11 +808,12 @@
             </form>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // Este script intercepta los clics de acceso para mostrar el modal y permite cerrarlo o alternar la visibilidad de la contraseña.
         const origenActual = window.location.origin;
         const esArchivoLocal = origenActual === 'null';
+        prepararSupabaseEnFrontend();
         // Si se abre esta vista directamente, se redirige al inicio para mantener el acceso desde index.html.
         if (!esArchivoLocal && (!document.referrer || !document.referrer.startsWith(origenActual))) {
             window.location.href = 'index.html';
@@ -860,6 +861,53 @@
         let archivoDocumentoSeleccionado = null;
         let urlVistaDocumentoTemporal = '';
         let urlsBlobDocumentos = [];
+
+        // Recupera la configuración pública desde el backend si el frontend aún no la tiene definida.
+        async function cargarConfiguracionSupabase() {
+            if (window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+                return true;
+            }
+
+            try {
+                const respuesta = await fetch('/api/configuracion-publica');
+                if (!respuesta.ok) {
+                    return false;
+                }
+                const datos = await respuesta.json().catch(() => ({}));
+                if (datos.supabaseUrl && datos.supabaseAnonKey) {
+                    window.SUPABASE_URL = datos.supabaseUrl;
+                    window.SUPABASE_ANON_KEY = datos.supabaseAnonKey;
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        // Inicializa Supabase en el frontend cuando están disponibles las claves públicas.
+        function inicializarClienteSupabase() {
+            if (window.sb) {
+                return window.sb;
+            }
+
+            if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
+                return null;
+            }
+
+            if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+                return null;
+            }
+
+            window.sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+            return window.sb;
+        }
+
+        // Ensambla la configuración pública y crea el cliente de Supabase al cargar la página.
+        async function prepararSupabaseEnFrontend() {
+            await cargarConfiguracionSupabase();
+            inicializarClienteSupabase();
+        }
 
         // Bloquea el desplazamiento del fondo mientras haya un modal o panel abierto.
         function actualizarEstadoScroll() {
