@@ -809,6 +809,15 @@
         </div>
     </div>
 
+    <script type="module">
+        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+        // Inicializa el cliente de Supabase si las claves ya están expuestas en window.
+        if (window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+            window._supabaseClient = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+        }
+    </script>
+
     <script>
         // Este script intercepta los clics de acceso para mostrar el modal y permite cerrarlo o alternar la visibilidad de la contraseña.
         const origenActual = window.location.origin;
@@ -1091,7 +1100,7 @@
                 return;
             }
 
-            // Conserva el archivo para enviarlo con FormData y genera una vista previa local.
+            // Conserva el archivo para subirlo directo a Storage y genera una vista previa local.
             archivoDocumentoSeleccionado = archivo;
             if (urlVistaDocumentoTemporal) {
                 URL.revokeObjectURL(urlVistaDocumentoTemporal);
@@ -1265,23 +1274,12 @@
         }
 
         async function crearDocumento(documento) {
-            const formulario = new FormData();
-            formulario.append('titulo_documento', documento.titulo);
-            formulario.append('descripcion_documento', documento.descripcion || '');
-            formulario.append('tipo_documento', documento.tipo);
-            formulario.append('archivo', documento.archivo);
-
-            const datos = await solicitarApi(
-                '/api/documentos',
-                {
-                    method: 'POST',
-                    headers: {
-                        ...construirEncabezadosAdmin()
-                    },
-                    body: formulario
-                },
-                'No se pudo contactar la API de documentos para crear el documento.'
-            );
+            const datos = await subirYCrearDocumento({
+                titulo: documento.titulo,
+                descripcion: documento.descripcion,
+                tipo: documento.tipo,
+                archivo: documento.archivo
+            });
 
             const documentoCreado = datos.documento
                 || (Array.isArray(datos.documentos) ? datos.documentos[0] : null)
@@ -1297,30 +1295,28 @@
 
         async function actualizarDocumento(id, documento) {
             const usarArchivo = Boolean(documento.archivo);
+            let storagePath = '';
+
+            if (usarArchivo) {
+                storagePath = await subirDocumentoConToken(documento.archivo);
+            }
+
+            const payload = {
+                titulo_documento: documento.titulo,
+                descripcion_documento: documento.descripcion || null,
+                documento: documento.url,
+                tipo_documento: documento.tipo,
+                storage_path: storagePath || null
+            };
+
             const opcionesSolicitud = {
                 method: 'PUT',
                 headers: {
-                    ...construirEncabezadosAdmin()
-                }
+                    ...construirEncabezadosAdmin(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
             };
-
-            if (usarArchivo) {
-                const formulario = new FormData();
-                formulario.append('titulo_documento', documento.titulo);
-                formulario.append('descripcion_documento', documento.descripcion || '');
-                formulario.append('tipo_documento', documento.tipo);
-                formulario.append('archivo', documento.archivo);
-                opcionesSolicitud.body = formulario;
-            } else {
-                const payload = {
-                    titulo_documento: documento.titulo,
-                    descripcion_documento: documento.descripcion || null,
-                    documento: documento.url,
-                    tipo_documento: documento.tipo
-                };
-                opcionesSolicitud.headers['Content-Type'] = 'application/json';
-                opcionesSolicitud.body = JSON.stringify(payload);
-            }
 
             const datos = await solicitarApi(
                 `/api/documentos/${id}`,
@@ -1349,6 +1345,69 @@
                 },
                 'No se pudo contactar la API de documentos para eliminar el documento.'
             );
+        }
+
+        // Solicita un token y sube el archivo directo a Storage evitando pasar por el backend.
+        async function subirDocumentoConToken(archivo) {
+            if (!archivo) {
+                throw new Error('Debe seleccionar un archivo para subir.');
+            }
+            if (!window._supabaseClient) {
+                throw new Error('No se pudo inicializar Supabase. Revise las claves públicas en el frontend.');
+            }
+
+            const respuesta = await fetch('/api/documentos/presign', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...construirEncabezadosAdmin()
+                },
+                body: JSON.stringify({
+                    filename: archivo.name,
+                    contentType: archivo.type || 'application/octet-stream'
+                })
+            });
+
+            const datos = await respuesta.json().catch(() => ({}));
+            if (!respuesta.ok || datos.exito === false) {
+                throw new Error(datos.mensaje || 'No se pudo preparar la subida del documento.');
+            }
+
+            const resultadoSubida = await window._supabaseClient.storage
+                .from('documentos')
+                .uploadToSignedUrl(datos.path, datos.token, archivo);
+
+            if (resultadoSubida.error) {
+                throw new Error(resultadoSubida.error.message);
+            }
+
+            return datos.path;
+        }
+
+        // Encapsula el flujo de subir el archivo y luego registrar la metadata en la base de datos.
+        async function subirYCrearDocumento({ titulo, descripcion, tipo, archivo }) {
+            const storagePath = await subirDocumentoConToken(archivo);
+
+            const respuesta = await fetch('/api/documentos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...construirEncabezadosAdmin()
+                },
+                body: JSON.stringify({
+                    titulo_documento: titulo,
+                    descripcion_documento: descripcion || '',
+                    tipo_documento: tipo,
+                    storage_path: storagePath
+                })
+            });
+
+            const datos = await respuesta.json().catch(() => ({}));
+            if (!respuesta.ok || datos.exito === false) {
+                throw new Error(datos.mensaje || 'No se pudo guardar el documento en la base de datos.');
+            }
+
+            return datos;
         }
 
         function renderizarDocumentos(documentos) {

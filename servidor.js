@@ -180,6 +180,39 @@ function obtenerPoolParaSolicitud(respuesta) {
     return pool;
 }
 
+// Solicita un token temporal para subir un documento directo a Storage.
+app.post("/api/documentos/presign", async (req, res) => {
+    try {
+        if (!validarCorreoAdministrador(req, res)) {
+            return;
+        }
+        const { filename } = req.body || {};
+        if (!filename) {
+            return res.status(400).json({ exito: false, mensaje: "Falta filename" });
+        }
+
+        const nombreSeguro = String(filename)
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^\w.\-]+/g, "_");
+
+        const ruta = `${Date.now()}_${nombreSeguro}`;
+
+        const { data, error } = await supabase
+            .storage
+            .from("documentos")
+            .createSignedUploadUrl(ruta);
+
+        if (error) {
+            return res.status(500).json({ exito: false, mensaje: error.message });
+        }
+
+        return res.json({ exito: true, path: ruta, token: data.token });
+    } catch (e) {
+        return res.status(500).json({ exito: false, mensaje: String(e) });
+    }
+});
+
 
 // LISTAR DOCUMENTOS (opcionalmente por tipo)
 app.get("/api/documentos", async (req, res) => {
@@ -206,33 +239,19 @@ app.get("/api/documentos", async (req, res) => {
 });
 
 // CREAR DOCUMENTO
-app.post("/api/documentos", upload.single("archivo"), async (req, res) => {
+app.post("/api/documentos", async (req, res) => {
     try {
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
-        const { titulo_documento, descripcion_documento, tipo_documento } = req.body || {};
-        const archivo = req.file;
-        if (!titulo_documento || !tipo_documento || !archivo) {
+        const { titulo_documento, descripcion_documento, tipo_documento, storage_path } = req.body || {};
+        if (!titulo_documento || !tipo_documento || !storage_path) {
             return res.status(400).json({ exito: false, mensaje: "Faltan campos obligatorios." });
         }
 
-        // Genera un nombre único para el archivo en Storage.
-        const nombreSeguro = archivo.originalname.replace(/[^\w.\-]+/g, "_");
-        const ruta = `${Date.now()}_${nombreSeguro}`;
-
-        // Sube el archivo a Supabase Storage.
-        const { error: errorSubida } = await supabase.storage
-            .from("documentos")
-            .upload(ruta, archivo.buffer, { contentType: archivo.mimetype, upsert: false });
-
-        if (errorSubida) {
-            return res.status(500).json({ exito: false, mensaje: errorSubida.message });
-        }
-
         // Obtiene la URL pública cuando el bucket es público.
-        const { data: datosPublicos } = supabase.storage.from("documentos").getPublicUrl(ruta);
-        const urlDocumento = datosPublicos?.publicUrl || ruta;
+        const { data: datosPublicos } = supabase.storage.from("documentos").getPublicUrl(storage_path);
+        const urlDocumento = datosPublicos?.publicUrl || storage_path;
 
         const { data, error } = await supabase
             .from("documentos")
@@ -265,7 +284,7 @@ app.put("/api/documentos/:id", procesarArchivoSiEsMultipart, async (req, res) =>
             return res.status(400).json({ exito: false, mensaje: "ID inválido." });
         }
 
-        const { titulo_documento, descripcion_documento, documento, tipo_documento } = req.body || {};
+        const { titulo_documento, descripcion_documento, documento, tipo_documento, storage_path } = req.body || {};
         const payload = {};
         if (titulo_documento != null) {
             payload.titulo_documento = titulo_documento;
@@ -290,6 +309,10 @@ app.put("/api/documentos/:id", procesarArchivoSiEsMultipart, async (req, res) =>
 
             const { data: datosPublicos } = supabase.storage.from("documentos").getPublicUrl(ruta);
             payload.documento = datosPublicos?.publicUrl || ruta;
+        } else if (storage_path != null && String(storage_path).trim() !== "") {
+            // Acepta la ruta enviada por el frontend cuando el archivo ya se subió a Storage.
+            const { data: datosPublicos } = supabase.storage.from("documentos").getPublicUrl(storage_path);
+            payload.documento = datosPublicos?.publicUrl || storage_path;
         } else if (documento != null && String(documento).trim() !== "") {
             payload.documento = documento;
         }
