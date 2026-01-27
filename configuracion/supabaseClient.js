@@ -1,4 +1,9 @@
+const path = require('path');
+const dotenv = require('dotenv');
 const { createClient } = require("@supabase/supabase-js");
+
+// Carga variables de entorno desde .env para entornos locales.
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 let supabaseCliente = null;
 let errorConfiguracion = null;
@@ -17,7 +22,7 @@ function obtenerClienteSupabase() {
     return { cliente: null, error: errorConfiguracion };
   }
 
-supabaseCliente = createClient(supabaseUrl, supabaseKey, {
+  supabaseCliente = createClient(supabaseUrl, supabaseKey, {
     auth: { persistSession: false }
   });
 
