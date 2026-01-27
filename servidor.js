@@ -2,7 +2,7 @@ const path = require('path');
 const express = require('express');
 const multer = require('multer');
 const { obtenerPool, probarConexion, hayConfiguracionBaseDatos } = require('./configuracion/conexionBaseDatos');
-const supabase = require("./configuracion/supabaseClient");
+const { obtenerClienteSupabase } = require("./configuracion/supabaseClient");
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -199,10 +199,28 @@ function obtenerPoolParaSolicitud(respuesta) {
     return pool;
 }
 
+function obtenerSupabaseParaSolicitud(respuesta) {
+    const { cliente, error } = obtenerClienteSupabase();
+
+    if (!cliente) {
+        // Responde con un mensaje claro cuando falta configuración en el entorno.
+        respuesta.status(503).json({
+            exito: false,
+            mensaje: error || 'No hay configuración de Supabase disponible en este entorno.'
+        });
+        return null;
+    }
+
+    return cliente;
+}
 
 // LISTAR DOCUMENTOS (opcionalmente por tipo)
 app.get("/api/documentos", async (req, res) => {
     try {
+        const supabase = obtenerSupabaseParaSolicitud(res);
+        if (!supabase) {
+            return;
+        }
         const tipo = (req.query.tipo || "").toString().trim();
 
         let q = supabase
@@ -227,6 +245,10 @@ app.get("/api/documentos", async (req, res) => {
 // CREAR DOCUMENTO
 app.post("/api/documentos", upload.single("archivo"), async (req, res) => {
     try {
+        const supabase = obtenerSupabaseParaSolicitud(res);
+        if (!supabase) {
+            return;
+        }
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -276,6 +298,10 @@ app.post("/api/documentos", upload.single("archivo"), async (req, res) => {
 // EDITAR DOCUMENTO
 app.put("/api/documentos/:id", procesarArchivoSiEsMultipart, async (req, res) => {
     try {
+        const supabase = obtenerSupabaseParaSolicitud(res);
+        if (!supabase) {
+            return;
+        }
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -335,6 +361,10 @@ app.put("/api/documentos/:id", procesarArchivoSiEsMultipart, async (req, res) =>
 // ELIMINAR DOCUMENTO
 app.delete("/api/documentos/:id", async (req, res) => {
     try {
+        const supabase = obtenerSupabaseParaSolicitud(res);
+        if (!supabase) {
+            return;
+        }
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -360,6 +390,10 @@ app.delete("/api/documentos/:id", async (req, res) => {
 // LISTAR USUARIOS
 app.get("/api/usuarios", async (req, res) => {
     try {
+        const supabase = obtenerSupabaseParaSolicitud(res);
+        if (!supabase) {
+            return;
+        }
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -403,6 +437,10 @@ function validarCorreoAdministrador(req, res) {
 // CREAR USUARIO
 app.post("/api/usuarios", async (req, res) => {
     try {
+        const supabase = obtenerSupabaseParaSolicitud(res);
+        if (!supabase) {
+            return;
+        }
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -429,6 +467,10 @@ app.post("/api/usuarios", async (req, res) => {
 // EDITAR USUARIO
 app.put("/api/usuarios/:id", async (req, res) => {
     try {
+        const supabase = obtenerSupabaseParaSolicitud(res);
+        if (!supabase) {
+            return;
+        }
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -468,6 +510,10 @@ app.put("/api/usuarios/:id", async (req, res) => {
 // ELIMINAR USUARIO
 app.delete("/api/usuarios/:id", async (req, res) => {
     try {
+        const supabase = obtenerSupabaseParaSolicitud(res);
+        if (!supabase) {
+            return;
+        }
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -531,6 +577,10 @@ app.post('/api/autenticacion', async (req, res) => {
     }
 
     try {
+        const supabase = obtenerSupabaseParaSolicitud(res);
+        if (!supabase) {
+            return;
+        }
         // Trae solo las columnas reales de la tabla usuarios.
         const { data: usuario, error } = await supabase
             .from('usuarios')
@@ -541,9 +591,12 @@ app.post('/api/autenticacion', async (req, res) => {
 
         if (error) {
             console.error('Supabase error /api/autenticacion:', error);
+            const esErrorPermisos = /permission denied|rls|row level security/i.test(error.message || "");
             return res.status(500).json({
                 exito: false,
-                mensaje: 'No se pudo validar el acceso en Supabase.',
+                mensaje: esErrorPermisos
+                    ? 'No hay permisos para consultar usuarios en Supabase. Use la key de servicio o ajuste RLS.'
+                    : 'No se pudo validar el acceso en Supabase.',
                 detalle: error.message
             });
         }
@@ -587,6 +640,10 @@ app.post('/api/autenticacion', async (req, res) => {
  */
 app.get('/api/diag/supabase', async (_req, res) => {
     try {
+        const supabase = obtenerSupabaseParaSolicitud(res);
+        if (!supabase) {
+            return;
+        }
         const { data, error } = await supabase
             .from('usuarios')
             .select('correo')
