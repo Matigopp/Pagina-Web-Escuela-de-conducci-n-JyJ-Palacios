@@ -890,7 +890,6 @@ app.post('/api/autenticacion', async (req, res) => {
         });
     }
 })
-
 app.get("/api/diag/env", (_req, res) => {
   res.json({
     vercel_env: process.env.VERCEL_ENV, // "production" o "preview"
