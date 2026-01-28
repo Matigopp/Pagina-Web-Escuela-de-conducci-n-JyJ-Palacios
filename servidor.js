@@ -214,6 +214,31 @@ function obtenerSupabaseParaSolicitud(respuesta) {
     return cliente;
 }
 
+async function buscarUsuarioPorCorreoConPool(pool, correo) {
+    const mapa = await obtenerMapaUsuarios(pool);
+
+    if (!mapa.columnaCorreo || !mapa.columnaContrasena) {
+        return {
+            usuario: null,
+            error: 'No se pudo identificar las columnas de correo y contraseña en la tabla usuarios.'
+        };
+    }
+
+    const consulta = `
+        SELECT
+            ${mapa.columnaId} AS id_usuario,
+            ${mapa.columnaNombre} AS nombre,
+            ${mapa.columnaCorreo} AS correo,
+            ${mapa.columnaContrasena} AS contrasena
+        FROM usuarios
+        WHERE ${mapa.columnaCorreo} = $1
+        LIMIT 1
+    `;
+
+    const { rows } = await pool.query(consulta, [correo]);
+    return { usuario: rows[0] || null, error: null };
+}
+
 // LISTAR DOCUMENTOS (opcionalmente por tipo)
 app.get("/api/documentos", async (req, res) => {
     try {
@@ -577,27 +602,52 @@ app.post('/api/autenticacion', async (req, res) => {
     }
 
     try {
-        const supabase = obtenerSupabaseParaSolicitud(res);
-        if (!supabase) {
-            return;
+        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabase();
+        let usuario = null;
+        let errorConsulta = null;
+
+        if (supabase) {
+            // Trae solo las columnas reales de la tabla usuarios desde Supabase.
+            const { data, error } = await supabase
+                .from('usuarios')
+                .select('id_usuario, nombre, correo, contrasena')
+                .eq('correo', correo)
+                .maybeSingle();
+
+            if (error) {
+                console.error('Supabase error /api/autenticacion:', error);
+                errorConsulta = error.message || 'Error desconocido en Supabase.';
+            } else {
+                usuario = data;
+            }
+        } else {
+            errorConsulta = errorSupabase || 'No hay configuración de Supabase disponible en este entorno.';
         }
-        // Trae solo las columnas reales de la tabla usuarios.
-        const { data: usuario, error } = await supabase
-            .from('usuarios')
-            .select('id_usuario, nombre, correo, contrasena')
-            .eq('correo', correo)
-            .maybeSingle();
 
+        const sinSupabase = !supabase;
+        const esErrorPermisos = /permission denied|rls|row level security/i.test(errorConsulta || '');
 
-        if (error) {
-            console.error('Supabase error /api/autenticacion:', error);
-            const esErrorPermisos = /permission denied|rls|row level security/i.test(error.message || "");
-            return res.status(500).json({
+        if (!usuario && (esErrorPermisos || !supabase)) {
+            const pool = obtenerPool();
+            if (pool) {
+                const resultado = await buscarUsuarioPorCorreoConPool(pool, correo);
+                if (resultado.error) {
+                    errorConsulta = resultado.error;
+                } else {
+                    usuario = resultado.usuario;
+                }
+            }
+        }
+
+        if (!usuario && errorConsulta) {
+            const mensaje = esErrorPermisos
+                ? 'No hay permisos para consultar usuarios en Supabase. Configure la key de servicio o ajuste RLS.'
+                : 'No se pudo validar el acceso en Supabase.';
+            const codigoEstado = sinSupabase ? 503 : esErrorPermisos ? 500 : 502;
+            return res.status(codigoEstado).json({
                 exito: false,
-                mensaje: esErrorPermisos
-                    ? 'No hay permisos para consultar usuarios en Supabase. Use la key de servicio o ajuste RLS.'
-                    : 'No se pudo validar el acceso en Supabase.',
-                detalle: error.message
+                mensaje,
+                detalle: errorConsulta
             });
         }
 
