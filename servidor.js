@@ -2,7 +2,7 @@ const path = require('path');
 const express = require('express');
 const multer = require('multer');
 const { obtenerPool, probarConexion, hayConfiguracionBaseDatos } = require('./configuracion/conexionBaseDatos');
-const { obtenerClienteSupabase } = require("./configuracion/supabaseClient");
+const { obtenerClienteSupabase, obtenerClienteSupabaseAdmin } = require("./configuracion/supabaseClient");
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -520,7 +520,8 @@ app.delete("/api/documentos/:id", async (req, res) => {
 // LISTAR USUARIOS
 app.get("/api/usuarios", async (req, res) => {
     try {
-        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabase();
+        // Para operaciones de usuarios se necesita la key de servicio para evitar bloqueos por RLS.
+        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabaseAdmin();
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -592,7 +593,8 @@ function validarCorreoAdministrador(req, res) {
 // CREAR USUARIO
 app.post("/api/usuarios", async (req, res) => {
     try {
-        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabase();
+        // Para operaciones de usuarios se necesita la key de servicio para evitar bloqueos por RLS.
+        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabaseAdmin();
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -646,7 +648,8 @@ app.post("/api/usuarios", async (req, res) => {
 // EDITAR USUARIO
 app.put("/api/usuarios/:id", async (req, res) => {
     try {
-        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabase();
+        // Para operaciones de usuarios se necesita la key de servicio para evitar bloqueos por RLS.
+        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabaseAdmin();
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -713,7 +716,8 @@ app.put("/api/usuarios/:id", async (req, res) => {
 // ELIMINAR USUARIO
 app.delete("/api/usuarios/:id", async (req, res) => {
     try {
-        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabase();
+        // Para operaciones de usuarios se necesita la key de servicio para evitar bloqueos por RLS.
+        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabaseAdmin();
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -804,7 +808,8 @@ app.post('/api/autenticacion', async (req, res) => {
     }
 
     try {
-        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabase();
+        // La autenticación consulta la tabla usuarios y requiere la key de servicio.
+        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabaseAdmin();
         let usuario = null;
         let errorConsulta = null;
 
