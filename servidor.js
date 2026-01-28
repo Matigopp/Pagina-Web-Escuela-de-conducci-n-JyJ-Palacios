@@ -214,6 +214,14 @@ function obtenerSupabaseParaSolicitud(respuesta) {
     return cliente;
 }
 
+// Detecta si el error de Supabase apunta a un bloqueo por permisos o RLS.
+function esErrorPermisosSupabase(error) {
+    const mensaje = typeof error === 'string'
+        ? error
+        : error?.message || '';
+    return /permission denied|rls|row level security|not authorized|insufficient privilege/i.test(mensaje);
+}
+
 async function buscarUsuarioPorCorreoConPool(pool, correo) {
     const mapa = await obtenerMapaUsuarios(pool);
 
@@ -237,6 +245,103 @@ async function buscarUsuarioPorCorreoConPool(pool, correo) {
 
     const { rows } = await pool.query(consulta, [correo]);
     return { usuario: rows[0] || null, error: null };
+}
+
+async function listarUsuariosConPool(pool) {
+    const mapa = await obtenerMapaUsuarios(pool);
+
+    if (!mapa.columnaCorreo || !mapa.columnaNombre || !mapa.columnaId) {
+        return {
+            usuarios: [],
+            error: 'No se pudo identificar las columnas necesarias en la tabla usuarios.'
+        };
+    }
+
+    const consulta = `
+        SELECT
+            ${mapa.columnaId} AS id_usuario,
+            ${mapa.columnaNombre} AS nombre,
+            ${mapa.columnaCorreo} AS correo
+        FROM usuarios
+        ORDER BY ${mapa.columnaId} ASC
+    `;
+
+    const { rows } = await pool.query(consulta);
+    return { usuarios: rows, error: null };
+}
+
+async function crearUsuarioConPool(pool, { nombre, correo, contrasena }) {
+    const mapa = await obtenerMapaUsuarios(pool);
+
+    if (!mapa.columnaCorreo || !mapa.columnaNombre || !mapa.columnaContrasena) {
+        return {
+            usuario: null,
+            error: 'No se pudo identificar las columnas necesarias en la tabla usuarios.'
+        };
+    }
+
+    const consulta = `
+        INSERT INTO usuarios (${mapa.columnaNombre}, ${mapa.columnaCorreo}, ${mapa.columnaContrasena})
+        VALUES ($1, $2, $3)
+        RETURNING
+            ${mapa.columnaId} AS id_usuario,
+            ${mapa.columnaNombre} AS nombre,
+            ${mapa.columnaCorreo} AS correo
+    `;
+
+    const { rows } = await pool.query(consulta, [nombre, correo, contrasena]);
+    return { usuario: rows[0] || null, error: null };
+}
+
+async function actualizarUsuarioConPool(pool, id, { nombre, correo, contrasena }) {
+    const mapa = await obtenerMapaUsuarios(pool);
+
+    const campos = [];
+    const valores = [];
+
+    if (nombre != null) {
+        campos.push(`${mapa.columnaNombre} = $${campos.length + 1}`);
+        valores.push(nombre);
+    }
+
+    if (correo != null) {
+        campos.push(`${mapa.columnaCorreo} = $${campos.length + 1}`);
+        valores.push(correo);
+    }
+
+    if (contrasena != null && String(contrasena).trim() !== '') {
+        campos.push(`${mapa.columnaContrasena} = $${campos.length + 1}`);
+        valores.push(contrasena);
+    }
+
+    if (campos.length === 0) {
+        return { usuario: null, error: 'No hay datos para actualizar.' };
+    }
+
+    valores.push(id);
+
+    const consulta = `
+        UPDATE usuarios
+        SET ${campos.join(', ')}
+        WHERE ${mapa.columnaId} = $${valores.length}
+        RETURNING
+            ${mapa.columnaId} AS id_usuario,
+            ${mapa.columnaNombre} AS nombre,
+            ${mapa.columnaCorreo} AS correo
+    `;
+
+    const { rows } = await pool.query(consulta, valores);
+    return { usuario: rows[0] || null, error: null };
+}
+
+async function eliminarUsuarioConPool(pool, id) {
+    const mapa = await obtenerMapaUsuarios(pool);
+    const consulta = `
+        DELETE FROM usuarios
+        WHERE ${mapa.columnaId} = $1
+    `;
+    const resultado = await pool.query(consulta, [id]);
+    return { eliminado: resultado.rowCount > 0, error: null };
 }
 
 // LISTAR DOCUMENTOS (opcionalmente por tipo)
@@ -415,22 +520,47 @@ app.delete("/api/documentos/:id", async (req, res) => {
 // LISTAR USUARIOS
 app.get("/api/usuarios", async (req, res) => {
     try {
-        const supabase = obtenerSupabaseParaSolicitud(res);
-        if (!supabase) {
-            return;
-        }
+        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabase();
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
-        const { data, error } = await supabase
-            .from("usuarios")
-            .select("id_usuario, nombre, correo")
-            .order("id_usuario", { ascending: true });
 
-        if (error) {
-            return res.status(500).json({ exito: false, mensaje: error.message });
+        let usuarios = null;
+        let errorConsulta = null;
+
+        if (supabase) {
+            const { data, error } = await supabase
+                .from("usuarios")
+                .select("id_usuario, nombre, correo")
+                .order("id_usuario", { ascending: true });
+
+            if (error) {
+                console.error("Supabase error /api/usuarios:", error);
+                errorConsulta = error.message || "Error desconocido en Supabase.";
+            } else {
+                usuarios = data;
+            }
+        } else {
+            errorConsulta = errorSupabase || "No hay configuración de Supabase disponible en este entorno.";
         }
-        return res.json({ exito: true, usuarios: data });
+
+        if (!usuarios && (esErrorPermisosSupabase(errorConsulta) || !supabase)) {
+            const pool = obtenerPoolParaSolicitud(res);
+            if (!pool) {
+                return;
+            }
+            const resultado = await listarUsuariosConPool(pool);
+            if (resultado.error) {
+                errorConsulta = resultado.error;
+            } else {
+                usuarios = resultado.usuarios;
+            }
+        }
+
+        if (!usuarios && errorConsulta) {
+            return res.status(500).json({ exito: false, mensaje: errorConsulta });
+        }
+        return res.json({ exito: true, usuarios: usuarios || [] });
     } catch (e) {
         return res.status(500).json({ exito: false, mensaje: String(e) });
     }
@@ -462,10 +592,7 @@ function validarCorreoAdministrador(req, res) {
 // CREAR USUARIO
 app.post("/api/usuarios", async (req, res) => {
     try {
-        const supabase = obtenerSupabaseParaSolicitud(res);
-        if (!supabase) {
-            return;
-        }
+        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabase();
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -474,16 +601,43 @@ app.post("/api/usuarios", async (req, res) => {
             return res.status(400).json({ exito: false, mensaje: "Faltan campos obligatorios." });
         }
 
-        const { data, error } = await supabase
-            .from("usuarios")
-            .insert([{ nombre, correo, contrasena }])
-            .select("id_usuario, nombre, correo")
-            .single();
+        let usuario = null;
+        let errorConsulta = null;
 
-        if (error) {
-            return res.status(500).json({ exito: false, mensaje: error.message });
+        if (supabase) {
+            const { data, error } = await supabase
+                .from("usuarios")
+                .insert([{ nombre, correo, contrasena }])
+                .select("id_usuario, nombre, correo")
+                .single();
+
+            if (error) {
+                console.error("Supabase error /api/usuarios (crear):", error);
+                errorConsulta = error.message || "Error desconocido en Supabase.";
+            } else {
+                usuario = data;
+            }
+        } else {
+            errorConsulta = errorSupabase || "No hay configuración de Supabase disponible en este entorno.";
         }
-        return res.json({ exito: true, usuario: data });
+
+        if (!usuario && (esErrorPermisosSupabase(errorConsulta) || !supabase)) {
+            const pool = obtenerPoolParaSolicitud(res);
+            if (!pool) {
+                return;
+            }
+            const resultado = await crearUsuarioConPool(pool, { nombre, correo, contrasena });
+            if (resultado.error) {
+                errorConsulta = resultado.error;
+            } else {
+                usuario = resultado.usuario;
+            }
+        }
+
+        if (!usuario && errorConsulta) {
+            return res.status(500).json({ exito: false, mensaje: errorConsulta });
+        }
+        return res.json({ exito: true, usuario });
     } catch (e) {
         return res.status(500).json({ exito: false, mensaje: String(e) });
     }
@@ -492,10 +646,7 @@ app.post("/api/usuarios", async (req, res) => {
 // EDITAR USUARIO
 app.put("/api/usuarios/:id", async (req, res) => {
     try {
-        const supabase = obtenerSupabaseParaSolicitud(res);
-        if (!supabase) {
-            return;
-        }
+        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabase();
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -516,17 +667,44 @@ app.put("/api/usuarios/:id", async (req, res) => {
             payload.contrasena = contrasena;
         }
 
-        const { data, error } = await supabase
-            .from("usuarios")
-            .update(payload)
-            .eq("id_usuario", id)
-            .select("id_usuario, nombre, correo")
-            .single();
+        let usuario = null;
+        let errorConsulta = null;
 
-        if (error) {
-            return res.status(500).json({ exito: false, mensaje: error.message });
+        if (supabase) {
+            const { data, error } = await supabase
+                .from("usuarios")
+                .update(payload)
+                .eq("id_usuario", id)
+                .select("id_usuario, nombre, correo")
+                .single();
+
+            if (error) {
+                console.error("Supabase error /api/usuarios (editar):", error);
+                errorConsulta = error.message || "Error desconocido en Supabase.";
+            } else {
+                usuario = data;
+            }
+        } else {
+            errorConsulta = errorSupabase || "No hay configuración de Supabase disponible en este entorno.";
         }
-        return res.json({ exito: true, usuario: data });
+
+        if (!usuario && (esErrorPermisosSupabase(errorConsulta) || !supabase)) {
+            const pool = obtenerPoolParaSolicitud(res);
+            if (!pool) {
+                return;
+            }
+            const resultado = await actualizarUsuarioConPool(pool, id, { nombre, correo, contrasena });
+            if (resultado.error) {
+                errorConsulta = resultado.error;
+            } else {
+                usuario = resultado.usuario;
+            }
+        }
+
+        if (!usuario && errorConsulta) {
+            return res.status(500).json({ exito: false, mensaje: errorConsulta });
+        }
+        return res.json({ exito: true, usuario });
     } catch (e) {
         return res.status(500).json({ exito: false, mensaje: String(e) });
     }
@@ -535,10 +713,7 @@ app.put("/api/usuarios/:id", async (req, res) => {
 // ELIMINAR USUARIO
 app.delete("/api/usuarios/:id", async (req, res) => {
     try {
-        const supabase = obtenerSupabaseParaSolicitud(res);
-        if (!supabase) {
-            return;
-        }
+        const { cliente: supabase, error: errorSupabase } = obtenerClienteSupabase();
         if (!validarCorreoAdministrador(req, res)) {
             return;
         }
@@ -547,13 +722,40 @@ app.delete("/api/usuarios/:id", async (req, res) => {
             return res.status(400).json({ exito: false, mensaje: "ID inválido." });
         }
 
-        const { error } = await supabase
-            .from("usuarios")
-            .delete()
-            .eq("id_usuario", id);
+        let errorConsulta = null;
+        let eliminado = false;
 
-        if (error) {
-            return res.status(500).json({ exito: false, mensaje: error.message });
+        if (supabase) {
+            const { error } = await supabase
+                .from("usuarios")
+                .delete()
+                .eq("id_usuario", id);
+
+            if (error) {
+                console.error("Supabase error /api/usuarios (eliminar):", error);
+                errorConsulta = error.message || "Error desconocido en Supabase.";
+            } else {
+                eliminado = true;
+            }
+        } else {
+            errorConsulta = errorSupabase || "No hay configuración de Supabase disponible en este entorno.";
+        }
+
+        if (!eliminado && (esErrorPermisosSupabase(errorConsulta) || !supabase)) {
+            const pool = obtenerPoolParaSolicitud(res);
+            if (!pool) {
+                return;
+            }
+            const resultado = await eliminarUsuarioConPool(pool, id);
+            if (resultado.error) {
+                errorConsulta = resultado.error;
+            } else {
+                eliminado = resultado.eliminado;
+            }
+        }
+
+        if (!eliminado && errorConsulta) {
+            return res.status(500).json({ exito: false, mensaje: errorConsulta });
         }
         return res.json({ exito: true });
     } catch (e) {
@@ -625,7 +827,7 @@ app.post('/api/autenticacion', async (req, res) => {
         }
 
         const sinSupabase = !supabase;
-        const esErrorPermisos = /permission denied|rls|row level security/i.test(errorConsulta || '');
+        const esErrorPermisos = esErrorPermisosSupabase(errorConsulta || '');
 
         if (!usuario && (esErrorPermisos || !supabase)) {
             const pool = obtenerPool();
