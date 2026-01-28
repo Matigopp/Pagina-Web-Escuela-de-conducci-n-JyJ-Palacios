@@ -431,7 +431,9 @@
             }
 
             tituloModalUsuario.textContent = 'Editar usuario';
-            campoIdUsuario.value = usuario.id;
+            // Garantiza que el formulario conserve el id real enviado por la API.
+            const idUsuario = usuario.id_usuario ?? usuario.id ?? '';
+            campoIdUsuario.value = idUsuario;
             campoNombre.value = usuario.nombre || '';
             campoCorreo.value = usuario.correo || '';
             campoContrasena.required = false;
@@ -452,6 +454,8 @@
             }
 
             usuarios.forEach((usuario) => {
+                // Normaliza el id para usarlo en las acciones del listado.
+                const idUsuario = usuario.id_usuario ?? usuario.id;
                 const fila = document.createElement('tr');
                 fila.innerHTML = `
                     <td>${usuario.nombre || ''}</td>
@@ -468,12 +472,12 @@
                 const [botonEditar, botonEliminar] = fila.querySelectorAll('button');
 
                 botonEditar.addEventListener('click', () => {
-                    prepararFormulario(usuario);
+                    prepararFormulario({ ...usuario, id: idUsuario });
                     alternarModalUsuario(true);
                 });
 
                 botonEliminar.addEventListener('click', () => {
-                    eliminarUsuario(usuario.id);
+                    eliminarUsuario(idUsuario);
                 });
 
                 cuerpoTablaUsuarios.appendChild(fila);
@@ -491,7 +495,13 @@
                     },
                     'No se pudo contactar la API de usuarios para obtener los usuarios.'
                 );
-                const usuarios = Array.isArray(datos.usuarios) ? datos.usuarios : [];
+                // Ajusta la estructura para que el frontend use el id esperado.
+                const usuarios = Array.isArray(datos.usuarios)
+                    ? datos.usuarios.map((usuario) => ({
+                        ...usuario,
+                        id: usuario.id_usuario ?? usuario.id
+                    }))
+                    : [];
                 renderizarUsuarios(usuarios);
                 actualizarEstadoUsuarios('');
             } catch (error) {
