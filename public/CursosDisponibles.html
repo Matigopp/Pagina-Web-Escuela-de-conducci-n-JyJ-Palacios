@@ -459,17 +459,17 @@
     <header>
         <div class="logo-container">
             <!-- Solo el logo lleva al inicio para evitar que el título redirija -->
-            <a class="logo-link" href="index.html" aria-label="Volver al inicio">
+            <a class="logo-link" href="/" aria-label="Volver al inicio">
                 <img class="logo-img" src="images/LOGO.jpg" alt="Logo de la Escuela de Conductores J&J Palacios SPA">
                 </a>
             <span class="logo-texto">ESCUELA DE CONDUCTORES J&J PALACIOS SPA</span>
         </div>
         <nav>
-            <a href="index.html">Inicio</a>
-            <a href="CursosDisponibles.html">Cursos</a>
-            <a href="ListaDeContenidos.html">Contenido</a>
-            <a href="Contacto.html">Contacto</a>
-            <a href="Usuarios.html" class="enlace-admin" id="enlace-gestion-usuarios">Gestión usuarios</a>
+            <a href="/">Inicio</a>
+            <a href="/cursos">Cursos</a>
+            <a href="/contenidos">Contenido</a>
+            <a href="/contacto">Contacto</a>
+            <a href="/usuarios" class="enlace-admin" id="enlace-gestion-usuarios">Gestión usuarios</a>
         </nav>
         <button class="btn-login" type="button" id="btn-iniciar-sesion">Iniciar sesión</button>
         <button class="btn-login btn-cerrar-sesion oculto" type="button" id="btn-cerrar-sesion">Cerrar sesión</button>
@@ -588,9 +588,9 @@
     <script>
         const origenActual = window.location.origin;
         const esArchivoLocal = origenActual === 'null';
-        // Si se abre esta vista directamente, se redirige al inicio para mantener la navegación desde index.html.
+        // Si se abre esta vista directamente, se redirige al inicio para mantener la navegación desde /.
         if (!esArchivoLocal && (!document.referrer || !document.referrer.startsWith(origenActual))) {
-            window.location.href = 'index.html';
+            window.location.href = '/';
         }
         
         const enlaceGestionUsuarios = document.getElementById('enlace-gestion-usuarios');

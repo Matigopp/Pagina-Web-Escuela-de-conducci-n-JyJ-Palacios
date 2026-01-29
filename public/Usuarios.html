@@ -261,18 +261,18 @@
 </head>
 <body>
     <header>
-        <a class="logo-link" href="index.html">
+        <a class="logo-link" href="/">
             <div class="logo-container">
                 <img class="logo-img" src="images/LOGO.jpg" alt="Logo J&J Palacios">
                 <span>Escuela de Conductores J&J Palacios</span>
             </div>
         </a>
         <nav>
-            <a href="index.html">Inicio</a>
-            <a href="CursosDisponibles.html">Cursos</a>
-            <a href="ListaDeContenidos.html">Contenidos</a>
-            <a href="Contacto.html">Contacto</a>
-            <a href="Usuarios.html" class="enlace-admin" id="enlace-gestion-usuarios">Gestión usuarios</a>
+            <a href="/">Inicio</a>
+            <a href="/cursos">Cursos</a>
+            <a href="/contenidos">Contenidos</a>
+            <a href="/contacto">Contacto</a>
+            <a href="/usuarios" class="enlace-admin" id="enlace-gestion-usuarios">Gestión usuarios</a>
         </nav>
     </header>
 
@@ -332,9 +332,9 @@
     <script>
         const origenActual = window.location.origin;
         const esArchivoLocal = origenActual === 'null';
-        // Si se abre esta vista directamente, se redirige al inicio para mantener la navegación desde index.html.
+        // Si se abre esta vista directamente, se redirige al inicio para mantener la navegación desde /.
         if (!esArchivoLocal && (!document.referrer || !document.referrer.startsWith(origenActual))) {
-            window.location.href = 'index.html';
+            window.location.href = '/';
         }
         const botonCrearUsuario = document.getElementById('btn-crear-usuario');
         const capaModalUsuario = document.getElementById('capa-modal-usuario');
@@ -380,7 +380,7 @@
                 enlaceGestionUsuarios.classList.toggle('visible', esAdmin);
             }
             if (!esAdmin) {
-                window.location.href = 'index.html';
+                window.location.href = '/';
                 return false;
             }
             return true;
