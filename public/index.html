@@ -95,11 +95,161 @@
             font-weight: bold;
             border: 2px solid white;
             transition: 0.3s;
+            cursor: pointer;
         }
 
         .btn-login:hover {
             background-color: white;
             color: var(--brand-red);
+        }
+
+        .btn-login.oculto {
+            display: none;
+        }
+
+        .btn-cerrar-sesion {
+            background-color: white;
+            color: var(--brand-red);
+            border-color: var(--brand-black);
+        }
+
+        .btn-cerrar-sesion:hover {
+            background-color: var(--brand-black);
+            color: white;
+        }
+
+        body.sin-scroll {
+            overflow: hidden;
+        }
+
+        .capa-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .capa-modal.visible {
+            display: flex;
+        }
+
+        .modal-acceso {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: min(100%, 420px);
+            position: relative;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .cerrar-modal {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            border: none;
+            background: transparent;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .modal-logo {
+            display: flex;
+            justify-content: center;
+        }
+
+        .modal-logo img {
+            width: 70px;
+            border-radius: 50%;
+            border: 2px solid var(--brand-red);
+        }
+
+        .modal-encabezado {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .modal-encabezado h3 {
+            margin: 0 0 6px;
+        }
+
+        .icono-info {
+            background: var(--brand-red);
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .grupo-campo {
+            margin-top: 16px;
+        }
+
+        .grupo-campo label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .campo-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--brand-gray);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .campo-input input {
+            border: none;
+            background: transparent;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .campo-input input:focus {
+            outline: none;
+        }
+
+        .btn-ojo {
+            border: none;
+            background: transparent;
+            color: var(--brand-red);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-ingresar {
+            width: 100%;
+            margin-top: 20px;
+            background: var(--brand-red);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .mensaje-error {
+            color: #c0392b;
+            font-weight: 600;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .mensaje-error.visible {
+            display: block;
         }
 
         .hero {
@@ -424,7 +574,8 @@
             <a href="Contacto.html">Contacto</a>
             <a href="Usuarios.html" class="enlace-admin" id="enlace-gestion-usuarios">Gestión usuarios</a>
         </nav>
-        <a href="ListaDeContenidos.html?iniciarSesion=true" class="btn-login">Iniciar sesión</a>
+        <button class="btn-login" type="button" id="btn-iniciar-sesion">Iniciar sesión</button>
+        <button class="btn-login btn-cerrar-sesion oculto" type="button" id="btn-cerrar-sesion">Cerrar sesión</button>
     </header>
 
     <section class="hero">
@@ -528,24 +679,102 @@
             © 2024 Escuela de Conductores J&J Palacios SPA curso teórico y práctico basado en el artículo 18 del Decreto 39 del Ministerio de transportes y telecomunicaciones.
         </div>
     </footer>
+    <div class="capa-modal" id="capa-modal" aria-hidden="true">
+        <div class="modal-acceso" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-acceso">
+            <button class="cerrar-modal" id="cerrar-modal" aria-label="Cerrar formulario de ingreso">×</button>
+            <div class="modal-logo">
+                <img src="images/LOGO.jpg" alt="Logo de la escuela de conductores">
+            </div>
+            <div class="modal-encabezado">
+                <div>
+                    <h3 id="titulo-modal-acceso">Iniciar sesión</h3>
+                    <p>Utilice su correo y contraseña para acceder.</p>
+                </div>
+                <span class="icono-info" aria-hidden="true">i</span>
+            </div>
+            <form id="formulario-acceso">
+                <div class="grupo-campo">
+                    <label for="campo-correo">Correo</label>
+                    <div class="campo-input">
+                        <input id="campo-correo" name="correo" type="email" placeholder="Ej. persona@dominio.cl"
+                            autocomplete="email" inputmode="email">
+                    </div>
+                </div>
+                <div class="grupo-campo">
+                    <label for="campo-contrasena">Contraseña</label>
+                    <div class="campo-input">
+                        <input id="campo-contrasena" name="contrasena" type="password"
+                            placeholder="Igual que el nombre de usuario" autocomplete="current-password">
+                        <button class="btn-ojo" type="button" id="toggle-contrasena"
+                            aria-label="Mostrar u ocultar contraseña">Ver</button>
+                    </div>
+                </div>
+                <button class="btn-ingresar" type="submit">Ingresar</button>
+                <p class="mensaje-error" id="mensaje-error" role="alert" aria-live="assertive"></p>
+            </form>
+        </div>
+    </div>
     <script>
         // Animación simple para ir rotando las imágenes de fondo del hero
         document.addEventListener('DOMContentLoaded', () => {
             const enlaceGestionUsuarios = document.getElementById('enlace-gestion-usuarios');
+            const btnIniciarSesion = document.getElementById('btn-iniciar-sesion');
+            const btnCerrarSesion = document.getElementById('btn-cerrar-sesion');
+            const capaModal = document.getElementById('capa-modal');
+            const btnCerrarModal = document.getElementById('cerrar-modal');
+            const botonToggleContrasena = document.getElementById('toggle-contrasena');
+            const campoContrasena = document.getElementById('campo-contrasena');
+            const formularioAcceso = document.getElementById('formulario-acceso');
+            const mensajeError = document.getElementById('mensaje-error');
+            const claveSesionAutenticada = 'usuario_autenticado';
             const claveDatosUsuario = 'usuario_datos';
+            const claveSesionAdmin = 'usuario_admin';
             const correoAdmin = 'admin@gmail.com';
             const fondosHero = document.querySelectorAll('.hero-fondo');
             const controlesHero = document.querySelectorAll('.control-hero');
+            let usuarioAutenticado = false;
+            let usuarioAdmin = false;
+            let datosUsuario = null;
             let indiceActual = 0;
             let intervaloHero = null;
             const tiempoCambioHero = 5000;
 
             // Mantiene la sesión activa para que no se cierre al cambiar de pantalla.
+            function guardarSesionUsuario(usuario, esAdmin) {
+                sessionStorage.setItem(claveSesionAutenticada, 'true');
+                sessionStorage.setItem(claveDatosUsuario, JSON.stringify(usuario || null));
+                sessionStorage.setItem(claveSesionAdmin, esAdmin ? 'true' : 'false');
+            }
+
+            function cargarSesionUsuario() {
+                const estadoSesion = sessionStorage.getItem(claveSesionAutenticada);
+                if (estadoSesion === 'true') {
+                    usuarioAutenticado = true;
+                    try {
+                        datosUsuario = JSON.parse(sessionStorage.getItem(claveDatosUsuario)) || null;
+                    } catch (error) {
+                        datosUsuario = null;
+                    }
+                }
+                usuarioAdmin = sessionStorage.getItem(claveSesionAdmin) === 'true';
+                actualizarBotonesSesion();
+                actualizarVisibilidadGestionUsuarios();
+            }
+
+            function cerrarSesionUsuario() {
+                usuarioAutenticado = false;
+                usuarioAdmin = false;
+                datosUsuario = null;
+                sessionStorage.removeItem(claveSesionAutenticada);
+                sessionStorage.removeItem(claveDatosUsuario);
+                sessionStorage.removeItem(claveSesionAdmin);
+                actualizarBotonesSesion();
+                actualizarVisibilidadGestionUsuarios();
+            }
 
             // Lee el correo guardado en la sesión para mostrar el acceso solo al administrador.
             function obtenerCorreoSesion() {
                 try {
-                    const datosUsuario = JSON.parse(sessionStorage.getItem(claveDatosUsuario));
                     if (datosUsuario && typeof datosUsuario.correo === 'string') {
                         return datosUsuario.correo.trim().toLowerCase();
                     }
@@ -560,11 +789,94 @@
                     return;
                 }
                 const correoSesion = obtenerCorreoSesion();
-                const esAdmin = correoSesion === correoAdmin;
+                const esAdmin = correoSesion === correoAdmin && usuarioAdmin;
                 enlaceGestionUsuarios.classList.toggle('visible', esAdmin);
             }
 
-            actualizarVisibilidadGestionUsuarios();
+            function actualizarBotonesSesion() {
+                btnIniciarSesion.classList.toggle('oculto', usuarioAutenticado);
+                btnCerrarSesion.classList.toggle('oculto', !usuarioAutenticado);
+            }
+
+            function actualizarEstadoScroll() {
+                const modalVisible = capaModal.classList.contains('visible');
+                document.body.classList.toggle('sin-scroll', modalVisible);
+            }
+
+            function mostrarModalAcceso() {
+                if (usuarioAutenticado) {
+                    return;
+                }
+                capaModal.classList.add('visible');
+                capaModal.setAttribute('aria-hidden', 'false');
+                document.getElementById('campo-correo').focus();
+                actualizarEstadoScroll();
+            }
+
+            function ocultarModalAcceso() {
+                capaModal.classList.remove('visible');
+                capaModal.setAttribute('aria-hidden', 'true');
+                mensajeError.classList.remove('visible');
+                mensajeError.textContent = '';
+                formularioAcceso.reset();
+                actualizarEstadoScroll();
+            }
+
+            // Alterna la visibilidad de la contraseña para que el usuario pueda verificarla.
+            function alternarContrasena() {
+                const esTexto = campoContrasena.type === 'text';
+                campoContrasena.type = esTexto ? 'password' : 'text';
+                botonToggleContrasena.textContent = esTexto ? 'Ver' : 'Ocultar';
+            }
+
+            // Controla el formulario de acceso con validación básica antes de consultar el backend.
+            async function manejarIngreso(evento) {
+                evento.preventDefault();
+                const correo = document.getElementById('campo-correo').value.trim();
+                const contrasena = campoContrasena.value.trim();
+
+                if (!correo || !contrasena) {
+                    mensajeError.textContent = 'Ingrese correo y contraseña para continuar.';
+                    mensajeError.classList.add('visible');
+                    return;
+                }
+
+                try {
+                    const respuesta = await autenticarUsuario(correo, contrasena);
+                    usuarioAutenticado = true;
+                    usuarioAdmin = correo.trim().toLowerCase() === correoAdmin && contrasena === 'admin';
+                    datosUsuario = respuesta.usuario;
+                    guardarSesionUsuario(respuesta.usuario, usuarioAdmin);
+                    actualizarBotonesSesion();
+                    actualizarVisibilidadGestionUsuarios();
+                    ocultarModalAcceso();
+                } catch (error) {
+                    const mensaje = error?.message || 'No se pudo validar el acceso.';
+                    mensajeError.textContent = mensaje;
+                    mensajeError.classList.add('visible');
+                }
+            }
+
+            // Envía las credenciales al backend propio para validar el acceso.
+            async function autenticarUsuario(correo, contrasena) {
+                const respuesta = await fetch('/api/autenticacion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ correo, contrasena })
+                });
+
+                const datos = await respuesta.json().catch(() => ({}));
+
+                if (!respuesta.ok || datos.exito === false) {
+                    throw new Error(datos.mensaje || datos.error || 'Las credenciales no son válidas.');
+                }
+
+                if (!datos.usuario) {
+                    throw new Error("Respuesta inválida del servidor: falta 'usuario'.");
+                }
+
+                return datos;
+            }
 
             function mostrarFondoSeleccionado(indiceNuevo) {
                 if (indiceNuevo === indiceActual) return;
@@ -596,6 +908,17 @@
             });
 
             reiniciarCambioAutomatico();
+            cargarSesionUsuario();
+            btnIniciarSesion.addEventListener('click', mostrarModalAcceso);
+            btnCerrarSesion.addEventListener('click', cerrarSesionUsuario);
+            btnCerrarModal.addEventListener('click', ocultarModalAcceso);
+            capaModal.addEventListener('click', (evento) => {
+                if (evento.target === capaModal) {
+                    ocultarModalAcceso();
+                }
+            });
+            botonToggleContrasena.addEventListener('click', alternarContrasena);
+            formularioAcceso.addEventListener('submit', manejarIngreso);
             // Visor para ampliar imágenes de la galería con fondo sombreado
             const imagenesGaleria = document.querySelectorAll('.tarjeta-imagen img');
             const visorImagen = document.querySelector('.visor-imagen');

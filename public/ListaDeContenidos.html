@@ -1300,7 +1300,6 @@
                 actualizarVisibilidadGestionUsuarios();
                 actualizarControlesAdministracion();
                 ocultarModalAcceso();
-                await mostrarPanelDocumentos(tipoListaSolicitada);
             } catch (error) {
                 const mensaje = error?.message || 'No se pudo validar el acceso.';
                 mensajeError.textContent = mensaje;
@@ -1631,16 +1630,7 @@
             enlace.addEventListener('click', mostrarModalAcceso);
         });
 
-        // Si se solicita el inicio de sesión desde otro botón, abre el modal automáticamente.
-        function revisarInicioSesionPorParametro() {
-            const inicioSesion = parametrosBusqueda.get('iniciarSesion');
-            if (inicioSesion === 'true') {
-                abrirModalAccesoDirecto('unidades');
-            }
-        }
-
         cargarSesionUsuario();
-        revisarInicioSesionPorParametro();
         btnCerrarModal.addEventListener('click', ocultarModalAcceso);
         capaModal.addEventListener('click', function (evento) {
             if (evento.target === capaModal) {
