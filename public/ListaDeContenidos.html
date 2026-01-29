@@ -853,8 +853,10 @@
         const baseApi = apiPersonalizada ? normalizarBaseApi(apiPersonalizada) : '';
         const claveSesionAutenticada = 'usuario_autenticado';
         const claveDatosUsuario = 'usuario_datos';
+        const claveSesionAdmin = 'usuario_admin';
         const correoAdmin = 'admin@gmail.com';
         let usuarioAutenticado = false;
+        let usuarioAdmin = false;
         let datosUsuario = null;
         let tipoListaSolicitada = 'unidades';
         let urlDocumentoSeleccionado = '';
@@ -982,9 +984,10 @@
         }
 
         // Guarda y recupera la autenticación durante la misma sesión del navegador.
-        function guardarSesionUsuario(usuario) {
+        function guardarSesionUsuario(usuario, esAdmin) {
             sessionStorage.setItem(claveSesionAutenticada, 'true');
             sessionStorage.setItem(claveDatosUsuario, JSON.stringify(usuario || null));
+            sessionStorage.setItem(claveSesionAdmin, esAdmin ? 'true' : 'false');
         }
 
         function cargarSesionUsuario() {
@@ -997,20 +1000,25 @@
                     datosUsuario = null;
                 }
             }
+            usuarioAdmin = sessionStorage.getItem(claveSesionAdmin) === 'true';
             actualizarVisibilidadCerrarSesion();
             actualizarVisibilidadInicioSesion();
             actualizarVisibilidadGestionUsuarios();
+            actualizarControlesAdministracion();
         }
 
         function cerrarSesionUsuario() {
             usuarioAutenticado = false;
+            usuarioAdmin = false;
             datosUsuario = null;
             sessionStorage.removeItem(claveSesionAutenticada);
             sessionStorage.removeItem(claveDatosUsuario);
+            sessionStorage.removeItem(claveSesionAdmin);
             ocultarPanelDocumentos();
             actualizarVisibilidadCerrarSesion();
             actualizarVisibilidadInicioSesion();
             actualizarVisibilidadGestionUsuarios();
+            actualizarControlesAdministracion();
         }
 
         function actualizarVisibilidadCerrarSesion() {
@@ -1042,6 +1050,24 @@
                 return datosUsuario.correo.trim().toLowerCase();
             }
             return '';
+        }
+
+        // Determina si el usuario autenticado puede editar, eliminar o agregar documentos.
+        function esUsuarioAdministrador() {
+            return obtenerCorreoSesion() === correoAdmin && usuarioAdmin;
+        }
+
+        // Ajusta los controles de edición para evitar acciones si no es administrador.
+        function actualizarControlesAdministracion() {
+            if (!btnAgregarDocumento) {
+                return;
+            }
+            const esAdmin = esUsuarioAdministrador();
+            btnAgregarDocumento.disabled = !esAdmin;
+            btnAgregarDocumento.setAttribute('aria-disabled', esAdmin ? 'false' : 'true');
+            btnAgregarDocumento.title = esAdmin
+                ? 'Agregar documento'
+                : 'Solo el administrador puede agregar documentos.';
         }
 
         // Prepara los headers mínimos que requiere el backend para autorizar escrituras.
@@ -1170,6 +1196,10 @@
         }
 
         function prepararFormularioNuevo() {
+            if (!esUsuarioAdministrador()) {
+                actualizarEstadoDocumentos('Solo el administrador puede agregar documentos.', true);
+                return;
+            }
             tituloModalDocumento.textContent = 'Agregar documento';
             campoIdDocumento.value = '';
             campoTituloDocumento.value = '';
@@ -1252,11 +1282,13 @@
             try {
                 const respuesta = await autenticarUsuario(correo, contrasena);
                 usuarioAutenticado = true;
+                usuarioAdmin = correo.trim().toLowerCase() === correoAdmin && contrasena === 'admin';
                 datosUsuario = respuesta.usuario;
-                guardarSesionUsuario(respuesta.usuario);
+                guardarSesionUsuario(respuesta.usuario, usuarioAdmin);
                 actualizarVisibilidadCerrarSesion();
                 actualizarVisibilidadInicioSesion();
                 actualizarVisibilidadGestionUsuarios();
+                actualizarControlesAdministracion();
                 ocultarModalAcceso();
                 await mostrarPanelDocumentos(tipoListaSolicitada);
             } catch (error) {
@@ -1402,6 +1434,7 @@
         function renderizarDocumentos(documentos) {
             listaDocumentos.innerHTML = '';
             limpiarUrlsBlobDocumentos();
+            const esAdmin = esUsuarioAdministrador();
             documentos.forEach(function (documento) {
                 const elemento = document.createElement('li');
                 elemento.className = 'item-documento';
@@ -1413,6 +1446,15 @@
                 const urlDocumento = documento.url || '';
                 const nombreDescarga = obtenerNombreDescarga(documento, urlDocumento);
 
+                const accionesDocumento = esAdmin
+                    ? `
+                        <div class="acciones-documento">
+                            <button class="btn-secundario" type="button" data-accion="editar">Editar</button>
+                            <button class="btn-secundario btn-eliminar" type="button" data-accion="eliminar">Eliminar</button>
+                        </div>
+                    `
+                    : '';
+
                 const contenidoDocumento = `
                     <div class=\"vista-previa\">
                         <object data=\"\" type=\"application/pdf\" aria-label=\"Vista previa de ${documento.titulo}\"></object>
@@ -1422,10 +1464,7 @@
                         <p>${documento.descripcion || 'Documento sin descripción disponible.'}</p>
                         <a class=\"enlace-descarga\" href=\"\" download=\"${nombreDescarga}\">Descargar</a>
                         <a class=\"enlace-vista\" href=\"\" target=\"_blank\" rel=\"noopener\">Ver en línea</a>
-                        <div class=\"acciones-documento\">
-                            <button class=\"btn-secundario\" type=\"button\" data-accion=\"editar\">Editar</button>
-                            <button class=\"btn-secundario btn-eliminar\" type=\"button\" data-accion=\"eliminar\">Eliminar</button>
-                        </div>
+                        ${accionesDocumento}
                     </div>
                 `;
 
@@ -1456,7 +1495,13 @@
             tipoListaSolicitada = tipoLista;
             const esMaterialApoyo = tipoLista === 'material';
             tituloPanelDocumentos.textContent = esMaterialApoyo ? 'Material de apoyo' : 'Documentos de unidades';
-            descripcionPanelDocumentos.textContent = esMaterialApoyo ? 'Vista previa y descarga en línea del material complementario.' : 'Vista previa y descarga rápida de las unidades.';
+            const descripcionBase = esMaterialApoyo
+                ? 'Vista previa y descarga en línea del material complementario.'
+                : 'Vista previa y descarga rápida de las unidades.';
+            const notaAdmin = esUsuarioAdministrador()
+                ? ''
+                : ' Solo el administrador puede editar, eliminar o agregar documentos.';
+            descripcionPanelDocumentos.textContent = `${descripcionBase}${notaAdmin}`;
             actualizarEstadoDocumentos('Cargando documentos...', false);
             listaDocumentos.innerHTML = '';
             panelDocumentos.classList.add('visible');
@@ -1487,6 +1532,10 @@
         // Envía el formulario para crear o actualizar documentos.
         async function manejarEnvioDocumento(evento) {
             evento.preventDefault();
+            if (!esUsuarioAdministrador()) {
+                actualizarMensajeDocumento('Solo el administrador puede guardar documentos.');
+                return;
+            }
             const id = campoIdDocumento.value.trim();
             const titulo = campoTituloDocumento.value.trim();
             const descripcion = campoDescripcionDocumento.value.trim();
@@ -1533,6 +1582,10 @@
         async function manejarAccionDocumento(evento) {
             const boton = evento.target.closest('button[data-accion]');
             if (!boton) {
+                return;
+            }
+            if (!esUsuarioAdministrador()) {
+                actualizarEstadoDocumentos('Solo el administrador puede editar o eliminar documentos.', true);
                 return;
             }
 
