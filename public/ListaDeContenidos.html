@@ -754,7 +754,7 @@
         <div class="panel-encabezado">
             <div>
                 <h4 id="titulo-panel-documentos">Documentos de unidades</h4>
-                <p id="descripcion-panel-documentos">Vista previa y descarga rápida.</p>
+                <p id="descripcion-panel-documentos">Aquí puedes descargar o ver en linea el contenido de estudio.</p>
             </div>
             <div class="acciones-panel-documentos">
                 <button class="btn-secundario" id="btn-agregar-documento" type="button">Agregar documento</button>
@@ -1505,13 +1505,8 @@
             tipoListaSolicitada = tipoLista;
             const esMaterialApoyo = tipoLista === 'material';
             tituloPanelDocumentos.textContent = esMaterialApoyo ? 'Material de apoyo' : 'Documentos de unidades';
-            const descripcionBase = esMaterialApoyo
-                ? 'Vista previa y descarga en línea del material complementario.'
-                : 'Vista previa y descarga rápida de las unidades.';
-            const notaAdmin = esUsuarioAdministrador()
-                ? ''
-                : ' Solo el administrador puede editar, eliminar o agregar documentos.';
-            descripcionPanelDocumentos.textContent = `${descripcionBase}${notaAdmin}`;
+            const descripcionBase = 'Aquí puedes descargar o ver en linea el contenido de estudio.';
+            descripcionPanelDocumentos.textContent = descripcionBase;
             actualizarEstadoDocumentos('Cargando documentos...', false);
             listaDocumentos.innerHTML = '';
             panelDocumentos.classList.add('visible');

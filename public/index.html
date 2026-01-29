@@ -540,9 +540,7 @@
             let intervaloHero = null;
             const tiempoCambioHero = 5000;
 
-            // Reinicia la sesión al abrir el sitio para garantizar que el acceso parta sin usuario autenticado.
-            sessionStorage.removeItem('usuario_autenticado');
-            sessionStorage.removeItem(claveDatosUsuario);
+            // Mantiene la sesión activa para que no se cierre al cambiar de pantalla.
 
             // Lee el correo guardado en la sesión para mostrar el acceso solo al administrador.
             function obtenerCorreoSesion() {
