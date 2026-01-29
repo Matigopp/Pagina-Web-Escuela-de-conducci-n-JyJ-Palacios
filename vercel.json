@@ -7,6 +7,10 @@
   "routes": [
     { "src": "/api/(.*)", "dest": "api/index.js" },
     { "src": "/", "dest": "/public/index.html" },
+    { "src": "/usuarios/?", "dest": "/public/Usuarios.html" },
+    { "src": "/contenidos/?", "dest": "/public/ListaDeContenidos.html" },
+    { "src": "/cursos/?", "dest": "/public/CursosDisponibles.html" },
+    { "src": "/contacto/?", "dest": "/public/Contacto.html" },
     { "src": "/(.*)", "dest": "/public/$1" }
   ]
 }
