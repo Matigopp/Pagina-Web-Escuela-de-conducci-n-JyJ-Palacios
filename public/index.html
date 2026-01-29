@@ -122,8 +122,8 @@
         .hero-fondo {
             position: absolute;
             inset: 0;
-            /* Gradiente ocupa todo el contenedor y la foto se ajusta completa para no cortar el mensaje. */
-            background-size: cover, contain;
+            /* La imagen ocupa todo el ancho para evitar bordes negros laterales. */
+            background-size: cover, cover;
             background-position: center, center;
             background-repeat: no-repeat;
             opacity: 0;
@@ -136,8 +136,8 @@
 
         @media (max-width: 768px) {
             .hero-fondo {
-                /* En pantallas pequeñas se sigue mostrando el mensaje completo. */
-                background-size: cover, contain;
+                /* Mantiene la cobertura completa en pantallas pequeñas. */
+                background-size: cover, cover;
             }
         }
 
