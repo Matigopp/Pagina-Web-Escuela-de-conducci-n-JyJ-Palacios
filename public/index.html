@@ -106,7 +106,9 @@
             position: relative;
             color: white;
             text-align: center;
-            padding: 120px 20px 140px;
+            /* Mantiene el alto necesario para ver el texto completo de las imágenes del carrusel. */
+            min-height: 360px;
+            padding: 0;
             overflow: hidden;
             background-color: #000;
         }
@@ -120,8 +122,9 @@
         .hero-fondo {
             position: absolute;
             inset: 0;
-            background-size: cover;
-            background-position: center;
+            /* Gradiente ocupa todo el contenedor y la foto se ajusta completa para no cortar el mensaje. */
+            background-size: cover, contain;
+            background-position: center, center;
             background-repeat: no-repeat;
             opacity: 0;
             transition: opacity 1s ease-in-out;
@@ -133,8 +136,8 @@
 
         @media (max-width: 768px) {
             .hero-fondo {
-                /* En pantallas pequeñas se prioriza llenar el alto del hero */
-                background-size: cover;
+                /* En pantallas pequeñas se sigue mostrando el mensaje completo. */
+                background-size: cover, contain;
             }
         }
 
