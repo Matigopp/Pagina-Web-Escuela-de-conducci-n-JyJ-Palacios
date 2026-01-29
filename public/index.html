@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,8 @@
     <style>
         /* Variables de colores basadas en tu logo */
         :root {
-            --brand-red: #f53333; /* Rojo del logo */
+            --brand-red: #f53333;
+            /* Rojo del logo */
             --brand-black: #1a1a1a;
             --brand-white: #ffffff;
             --brand-gray: #f4f4f4;
@@ -32,7 +34,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         /* Logo clickeable que reutiliza la imagen local para evitar dependencias externas */
@@ -55,8 +57,8 @@
         .logo-texto {
             line-height: 1.2;
         }
-        
-       .logo-img {
+
+        .logo-img {
             width: 52px;
             height: auto;
             border-radius: 50%;
@@ -129,12 +131,19 @@
             opacity: 1;
         }
 
+        @media (max-width: 768px) {
+            .hero-fondo {
+                /* En pantallas pequeñas se prioriza llenar el alto del hero */
+                background-size: cover;
+            }
+        }
+
         .hero h1 {
             font-size: 3rem;
             margin-bottom: 10px;
             text-shadow: 0 3px 6px rgba(0, 0, 0, 0.45);
         }
-        
+
         .hero p {
             font-size: 1.2rem;
             margin-bottom: 25px;
@@ -189,13 +198,13 @@
             border-radius: 6px;
             cursor: pointer;
             text-decoration: none;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .btn-primary:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
         }
 
         .section-container {
@@ -241,7 +250,7 @@
             border: 1px solid #e5e5e5;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
             transition: transform 0.2s ease;
         }
 
@@ -296,7 +305,7 @@
             max-width: 100%;
             max-height: 80vh;
             border-radius: 12px;
-            box-shadow: 0 18px 45px rgba(0,0,0,0.35);
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
             transform: scale(0.94);
             transition: transform 0.28s ease;
         }
@@ -350,11 +359,13 @@
             padding-bottom: 10px;
         }
 
-        .footer-col p, .footer-col a {
+        .footer-col p,
+        .footer-col a {
             color: white;
             margin: 6px 0;
             text-decoration: none;
         }
+
         .footer-col a:hover {
             text-decoration: underline;
         }
@@ -390,10 +401,9 @@
             height: 22px;
             flex-shrink: 0;
         }
-
-
     </style>
 </head>
+
 <body>
 
     <header>
@@ -401,7 +411,7 @@
             <!-- Solo el logo lleva al inicio para que el título no sea clickeable -->
             <a class="logo-link" href="index.html" aria-label="Volver al inicio">
                 <img class="logo-img" src="images/LOGO.jpg" alt="Logo de la Escuela de Conductores J&J Palacios SPA">
-                </a>
+            </a>
             <span class="logo-texto">ESCUELA DE CONDUCTORES J&J PALACIOS SPA</span>
         </div>
         <nav>
@@ -417,10 +427,16 @@
     <section class="hero">
         <div class="hero-fondos" aria-hidden="true">
             <!-- Fondos locales para que el inicio cargue sin dependencias externas -->
-            <div class="hero-fondo activo" style="background-image: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), url('images/dashboard1.jpeg');"></div>
-            <div class="hero-fondo" style="background-image: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), url('images/dashboard2.jpeg');"></div>
+            <div class="hero-fondo activo"
+                style="background-image: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), url('images/dashboard1.jpeg');">
+            </div>
+            <div class="hero-fondo"
+                style="background-image: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), url('images/dashboard2.jpeg');">
+            </div>
             <!-- Coloca la imagen dashboard.jpeg dentro de la carpeta images para que cargue en producción -->
-            <div class="hero-fondo" style="background-image: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), url('images/dashboard3.jpeg');"></div>
+            <div class="hero-fondo"
+                style="background-image: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), url('images/dashboard3.jpeg');">
+            </div>
         </div>
         <div class="hero-controles" aria-label="Seleccionar imagen de portada">
             <button class="control-hero activo" type="button" aria-label="Mostrar imagen uno"></button>
@@ -430,10 +446,21 @@
     </section>
 
     <section class="section-container">
-        <h2>Por qué elegir ESCUELA DE CONDUCTORES J&J PALACIOS SPA</h2>
+        <h2>QUIÉNES SOMOS</h2>
         <div class="about-box">
-            <p>Somos una escuela de conductores que combina metodología clara, instructores con experiencia comprobada y vehículos de uso cotidiano para que practiques en el entorno más parecido a tu día a día.</p>
-            <p>En esta página encontrarás un resumen de quiénes somos. Para revisar el detalle de contenidos, materiales y evaluaciones, utiliza el menú superior que te llevará a cada sección específica.</p>
+            <p>Somos una escuela de conducción fundada el 27 de enero de 2024, ubicada en San Antonio 144, en la comuna
+                de Litueche, con el firme propósito de formar conductores responsables, seguros y conscientes de su rol
+                en el tránsito. Nuestra institución fue creada por Jorge Palacios Vargas, instructor teórico certificado
+                por el SEMEP, con vocación por la enseñanza y un fuerte compromiso con la educación vial.</p> 
+
+            <p>La escuela se encuentra debidamente acreditada por el Ministerio de Transportes, cumpliendo con todas
+                las exigencias legales y normativas vigentes, lo que garantiza a nuestros alumnos una formación seria,
+                confiable y alineada con los estándares oficiales.</p> 
+
+            <p>Nos especializamos en la enseñanza teórica y práctica para la obtención de la Licencia de Conducir Clase
+                B, entregando una preparación integral que combina conocimientos técnicos, normativa de tránsito,
+                educación vial y práctica real de conducción.</p> 
+            
         </div>
         <h3 class="subtitulo-galeria">GALERÍA</h3>
         <div class="galeria-examenes">
@@ -447,7 +474,7 @@
             <div class="tarjeta-imagen">
                 <img src="images/ExamenesPsico.jpeg" alt="Evaluación psicológica para licencias de conducción">
             </div>
-             <div class="tarjeta-imagen">
+            <div class="tarjeta-imagen">
                 <img src="images/Examenes.jpeg" alt="Material de estudio para exámenes de conducción">
             </div>
         </div>
@@ -475,18 +502,26 @@
             <div class="footer-col">
                 <h3>Síguenos</h3>
                 <div class="redes-sociales">
-                    <a class="enlace-red-social" href="https://www.facebook.com/profile.php?id=61585570170056&locale=es_LA" target="_blank" rel="noopener noreferrer">
-                        <img class="icono-red-social" src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/facebook.svg" alt="Logo de Facebook">
+                    <a class="enlace-red-social"
+                        href="https://www.facebook.com/profile.php?id=61585570170056&locale=es_LA" target="_blank"
+                        rel="noopener noreferrer">
+                        <img class="icono-red-social"
+                            src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/facebook.svg"
+                            alt="Logo de Facebook">
                         <span>Facebook</span>
                     </a>
-                    <a class="enlace-red-social" href="https://www.instagram.com/conductoresjjpalacios/" target="_blank" rel="noopener noreferrer">
-                        <img class="icono-red-social" src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg" alt="Logo de Instagram">
+                    <a class="enlace-red-social" href="https://www.instagram.com/conductoresjjpalacios/" target="_blank"
+                        rel="noopener noreferrer">
+                        <img class="icono-red-social"
+                            src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg"
+                            alt="Logo de Instagram">
                         <span>Instagram</span>
                     </a>
                 </div>
             </div>
         </div>
-        <div style="text-align: center; margin-top: 40px; border-top: 1px solid #333; padding-top: 20px; font-size: 0.8rem;">
+        <div
+            style="text-align: center; margin-top: 40px; border-top: 1px solid #333; padding-top: 20px; font-size: 0.8rem;">
             © 2024 Escuela de Conductores J&J Palacios SPA Autorizados por el ministerio.
         </div>
     </footer>
@@ -560,7 +595,7 @@
             });
 
             reiniciarCambioAutomatico();
-             // Visor para ampliar imágenes de la galería con fondo sombreado
+            // Visor para ampliar imágenes de la galería con fondo sombreado
             const imagenesGaleria = document.querySelectorAll('.tarjeta-imagen img');
             const visorImagen = document.querySelector('.visor-imagen');
             const contenedorImagen = visorImagen.querySelector('img');
@@ -612,4 +647,5 @@
         });
     </script>
 </body>
+
 </html>
